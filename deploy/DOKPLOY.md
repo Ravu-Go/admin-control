@@ -24,6 +24,6 @@ Only deploy commits that passed the Admin UI workflow. A merge alone is not evid
 
 On a failed smoke test, roll this application back to its previous healthy deployment in Dokploy. Do not run backend migrations from this static frontend container.
 
-Branch protection for both `main` and `staging`: require PRs, require `quality`, `browser` and `secrets`, require the branch to be current before merging, block force pushes and deletion. Preserve main/staging. After a successful squash merge, delete only the merged `admin/phase-*` branch.
+Branch protection for both `main` and `staging`: require PRs, require `quality`, `browser`, `secrets` and `private-design-visual`, require the branch to be current before merging, block force pushes and deletion. Preserve main/staging. After a successful squash merge, delete only the merged `admin/phase-*` branch.
 
 The Phase 3 shell has no live API actions, staff authentication or feature screens. Phase 4 adds those foundations before any operational module is connected.

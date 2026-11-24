@@ -28,7 +28,7 @@ The saved A01/A28 PNGs and the matching archived design scripts supplied the exa
 
 The native 1440×1042 PNG contains a 42px external frame label and a 1440×1000 application surface. The shell test crops that label and masks only the unimplemented operational content (x224/y176/w1216/h788). It compares navigation, topbar, title/subtitle and demo footer against the original PNG, never a screenshot regenerated from our app. Small text on pale backgrounds uses the documented accessible muted variant `#626E84` (4.80:1 on the page background), replacing `#69758B` there (4.34:1). The component playground occupies the masked area and is deliberately distinct from a feature screen.
 
-`scripts/prepare-reference.mjs` regenerates the icon sprite/reference from an authorised API checkout. Screenshots are test references, never implementation assets.
+Native screenshots remain private in Ravu-API. Public frontend CI checks interactions, accessibility and shell geometry. The separate `private-design-visual` merge gate requires the private API CI comparison of the pinned frontend commit against the original native PNG. Its artifacts stay private too. `scripts/prepare-visual-reference.mjs` accepts the private source path and refuses output inside this public checkout; it never regenerates a reference from the running app. `npm run test:visual:private` requires `PRIVATE_VISUAL_REFERENCE_DIR` and fails without the original baseline. The original icon sprite can be regenerated separately with `scripts/prepare-reference.mjs` from an authorised archive checkout.
 
 ## API contract
 
@@ -46,7 +46,7 @@ The frontend does not seed a database. Backend fictional seed commands and repor
 
 ## Staging workflow
 
-Branch from current `staging` into `admin/phase-N-description`. Conventional commit, PR into staging, green quality/browser/secrets checks, squash merge, verify the deployed staging commit and Playwright smoke, then delete the merged work branch. Preserve `main` and `staging`; production promotion requires explicit owner sign-off. The README-only initial main commit bootstrapped this originally empty repository; no app code was committed directly to main.
+Branch from current `staging` into `admin/phase-N-description`. Conventional commit, PR into staging, green quality/browser/secrets checks and the private native-design visual check, squash merge, verify the deployed staging commit and Playwright smoke, then delete the merged work branch. Preserve `main` and `staging`; production promotion requires explicit owner sign-off. The README-only initial main commit bootstrapped this originally empty repository; no app code was committed directly to main.
 
 Owner-selected hostname: **admin.ravultd.com**, serving staging. See [Dokploy settings](deploy/DOKPLOY.md). Deployment and branch-protection configuration must be verified in the external services; source files alone do not establish them.
 
