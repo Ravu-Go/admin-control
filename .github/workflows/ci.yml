@@ -62,3 +62,25 @@ jobs:
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" | sha256sum --check
           tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
           "$RUNNER_TEMP/gitleaks" dir . --redact=100 --no-banner
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build staging container
+        run: docker build -t ravu-admin-ci .
+      - name: Verify container health, deep links and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name ravu-admin-ci -p 127.0.0.1:4180:80 ravu-admin-ci
+          curl -fsS --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:4180/health | python3 -c "import json,sys; assert json.load(sys.stdin)['status'] == 'ok'"
+          curl -fsS http://127.0.0.1:4180/accounts | grep -qi '<!doctype html'
+          curl -fsSI http://127.0.0.1:4180/accounts > "$RUNNER_TEMP/admin-headers"
+          grep -qi '^Content-Security-Policy:' "$RUNNER_TEMP/admin-headers"
+          grep -qi '^X-Content-Type-Options: nosniff' "$RUNNER_TEMP/admin-headers"
+          grep -qi '^X-Frame-Options: DENY' "$RUNNER_TEMP/admin-headers"
+          grep -qi '^Cache-Control: no-store' "$RUNNER_TEMP/admin-headers"
+          curl -fsS http://127.0.0.1:4180/icons/navigation.svg > /dev/null
+      - name: Clean up test container
+        if: always()
+        run: docker rm -f ravu-admin-ci || true
