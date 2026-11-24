@@ -73,7 +73,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run -d --name ravu-admin-ci -p 127.0.0.1:4180:80 ravu-admin-ci
-          curl -fsS --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:4180/health | python3 -c "import json,sys; assert json.load(sys.stdin)['status'] == 'ok'"
+          curl -fsS --retry 10 --retry-all-errors --retry-delay 1 --retry-max-time 30 http://127.0.0.1:4180/health | python3 -c "import json,sys; assert json.load(sys.stdin)['status'] == 'ok'"
           curl -fsS http://127.0.0.1:4180/accounts | grep -qi '<!doctype html'
           curl -fsSI http://127.0.0.1:4180/accounts > "$RUNNER_TEMP/admin-headers"
           grep -qi '^Content-Security-Policy:' "$RUNNER_TEMP/admin-headers"
@@ -81,6 +81,9 @@ jobs:
           grep -qi '^X-Frame-Options: DENY' "$RUNNER_TEMP/admin-headers"
           grep -qi '^Cache-Control: no-store' "$RUNNER_TEMP/admin-headers"
           curl -fsS http://127.0.0.1:4180/icons/navigation.svg > /dev/null
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs ravu-admin-ci
       - name: Clean up test container
         if: always()
         run: docker rm -f ravu-admin-ci || true
