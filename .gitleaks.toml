@@ -1,0 +1,5 @@
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Installed dependencies and disposable browser/build outputs"
+paths = ['''node_modules/''', '''dist/''', '''test-results/''', '''playwright-report/''']

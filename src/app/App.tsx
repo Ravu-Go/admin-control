@@ -1,0 +1,49 @@
+import { useState } from 'react';
+import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { ColumnDef } from '@tanstack/react-table';
+import { AppShell } from './Shell';
+import { Button, BilingualPreview, ConfirmDialog, EvidencePanel, KeyboardHints, KpiCard, MaskedField, Panel, StatusBadge, Timeline } from '../design/components';
+import { DataTable } from '../design/DataTable';
+import { ConnectionLostState, EmptyState, LoadingState, PermissionState } from '../design/States';
+import { exampleRecords, exampleTimeline } from './fixtures';
+
+function Playground() {
+  const { t } = useTranslation();
+  const [confirming, setConfirming] = useState(false);
+  const [notice, setNotice] = useState('');
+  const columns: ColumnDef<(typeof exampleRecords)[number]>[] = [
+    { accessorKey: 'name', header: t('name') },
+    { accessorKey: 'status', header: t('status'), cell: ({ row }) => <StatusBadge status={row.original.status} label={t(row.original.status === 'success' ? 'verified' : 'pending')}/> },
+  ];
+  return <>
+    <div className="preview-intro"><strong>{t('preview')}</strong><p>{t('previewNote')}</p><Link to="/playground/states">A28 · {t('states')}</Link></div>
+    <div className="playground-grid">
+      <KpiCard label={t('componentTable')} value={null} detail={t('noFakeTotals')} context={t('preview')}/>
+      <Panel title={t('confirmTitle')}><Button onClick={() => setConfirming(true)}>{t('previewConfirm')}</Button>{notice && <p role="status">{notice}</p>}<KeyboardHints hints={[{ keys: '/', action: t('searchLabel') }, { keys: 'Esc', action: t('cancel') }, { keys: 'Ctrl+Enter', action: t('confirm') }]}/></Panel>
+      <Panel title={t('componentTable')}><DataTable rows={exampleRecords} columns={columns} previousTimestamp="10 Oct 2026, 09:40 EAT"/></Panel>
+      <Panel title={t('masked')}><MaskedField label={t('contact')} maskedValue="+255 *** *** 014" version={1} currentVersion={1}/></Panel>
+      <Panel title={t('timeline')}><Timeline items={exampleTimeline.map(item => ({ ...item, title: t('exampleReceived'), detail: t('exampleQueued') }))}/></Panel>
+      <EvidencePanel label="DEMO-014"/>
+      <Panel title={t('bilingual')}><BilingualPreview copy={{ en: 'This is a fictional message preview.', sw: 'Huu ni mfano wa ujumbe wa kubuni.' }} reviews={{ en: false, sw: false }}/></Panel>
+    </div>
+    {confirming && <ConfirmDialog title={t('previewConfirm')} version={1} currentVersion={1} canConfirm onCancel={() => setConfirming(false)} onConfirm={async () => { setNotice(t('savedPreview')); setConfirming(false); }}/ >}
+  </>;
+}
+function StatesPlayground() {
+  const { t } = useTranslation();
+  const [notice, setNotice] = useState('');
+  const preview = () => setNotice(t('savedPreview'));
+  return <><div className="states-grid"><EmptyState onClear={preview}/><LoadingState previousTimestamp="09:40 EAT"/><ConnectionLostState draftRetained={false} onReconnect={preview}/><PermissionState onRequest={preview} onReload={preview}/></div>{notice && <p role="status">{notice}</p>}</>;
+}
+function NotConnected() {
+  const { t } = useTranslation();
+  return <Panel title={t('noFeature')} description={t('noFeatureCopy')}><Link className="button secondary" to="/">{t('returnPreview')}</Link></Panel>;
+}
+export function App() {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const states = pathname === '/playground/states';
+  if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
+  return <AppShell title={t(states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}><Routes><Route path="/" element={<Playground/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="*" element={<NotConnected/>}/></Routes></AppShell>;
+}

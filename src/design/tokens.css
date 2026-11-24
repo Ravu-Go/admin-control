@@ -1,0 +1,23 @@
+:root {
+  --color-navy: #040D35;
+  --color-ink: #111D38;
+  --color-blue: #315BFF;
+  --color-sky: #6BADFF;
+  --color-muted: #69758B;
+  --color-mutedAccessible: #626E84;
+  --color-line: #E6EAF1;
+  --color-light: #F5F7FC;
+  --color-pale: #EFF3FF;
+  --color-white: #FFFFFF;
+  --color-success: #117B56;
+  --color-warning: #C79839;
+  --color-danger: #B33126;
+  --radius-badge: 8px;
+  --radius-button: 10px;
+  --radius-navigation: 12px;
+  --radius-profile: 14px;
+  --radius-card: 16px;
+  --font-family: Inter, sans-serif;
+  --sidebar-width: 224px;
+  --topbar-height: 80px;
+}
