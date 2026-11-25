@@ -66,7 +66,7 @@ test('email code form is accessible and responsive in EN and SW', async ({ page 
   const screenshotPath = testInfo.outputPath('email-verification-mobile.png');
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await testInfo.attach('email-verification-mobile', { path: screenshotPath, contentType: 'image/png' });
-  await page.getByRole('button', { name: 'Switch to Swahili' }).click();
+  await page.getByRole('button', { name: 'EN · Switch to Swahili', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Angalia barua pepe yako' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

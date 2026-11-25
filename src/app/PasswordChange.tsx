@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { sendPasswordCode, changeStaffPassword, StaffAuthError } from '../api/staff-auth';
+import { sendPasswordCode, changeStaffPassword, StaffAuthError, type StaffPasswordChangeRequest } from '../api/staff-auth';
 import { VerificationCodeInput } from '../design/VerificationCodeInput';
 
 /** Credentials live only in this form; requests are cancelled on departure. */
@@ -51,7 +51,7 @@ export function PasswordChange({ onChanged }: { onChanged: () => void }) {
     } catch (failure) { if (mounted.current && !controller.signal.aborted) report(failure, true); }
     finally { if (request.current === controller) request.current = null; if (mounted.current) setBusy(false); }
   };
-  const submit = async (values: { code: string; password: string; password_confirmation: string }) => {
+  const submit = async (values: StaffPasswordChangeRequest) => {
     if (request.current || !challenge || Date.now() >= challenge.expiresAt) return;
     const controller = new AbortController(); request.current = controller;
     setBusy(true); setError(''); setVisible(false); form.reset();
@@ -59,7 +59,7 @@ export function PasswordChange({ onChanged }: { onChanged: () => void }) {
     catch (failure) { if (mounted.current && !controller.signal.aborted) { report(failure, false); codeInput.current?.focus(); } }
     finally { if (request.current === controller) request.current = null; if (mounted.current) setBusy(false); }
   };
-  return <section className="password-change" aria-label={t('changePassword')}>
+  return <div className="password-change">
     <ol className="password-steps" aria-label={t('verificationSteps')}>
       <li className={challenge ? 'is-complete' : 'is-active'} aria-current={!challenge ? 'step' : undefined}><span aria-hidden="true">{challenge ? '✓' : '1'}</span>{t('confirmIdentity')}</li>
       <li className={challenge ? 'is-active' : ''} aria-current={challenge ? 'step' : undefined}><span aria-hidden="true">2</span>{t('verifyEmail')}</li>
@@ -94,5 +94,5 @@ export function PasswordChange({ onChanged }: { onChanged: () => void }) {
       {error && <p role="alert" className="login-error">{t(error)}</p>}
     </div>
     <p className="verification-security-note"><svg aria-hidden="true" width="16" height="18" viewBox="0 0 16 18" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1 14 4v5c0 4-6 7-6 7S2 13 2 9V4Z"/><path d="m5 8 2 2 4-4"/></svg>{t('passwordSessionNotice')}</p>
-  </section>;
+  </div>;
 }

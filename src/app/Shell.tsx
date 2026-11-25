@@ -10,7 +10,7 @@ import { canOpenRoute } from './permissions';
 
 export function DemoBanner({ appEnv, demoMode }: { appEnv: string; demoMode: boolean }) {
   const { t } = useTranslation();
-  return appEnv !== 'production' || demoMode ? <footer className="demo-banner" role="note">{t('demo')}</footer> : null;
+  return appEnv !== 'production' || demoMode ? <footer className="demo-banner">{t('demo')}</footer> : null;
 }
 
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {
@@ -54,7 +54,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <div className="global-search"><input ref={search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('searchLabel')}/><kbd>/</kbd>{query.length > 0 && <div className="search-results" role="status">{t('noFeature')}</div>}</div>
     <div className="topbar-actions">
       {canOpenRoute(session?.permissions ?? [], '/sos') && <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>}
-      <button className="language" aria-label={i18n.language === 'en' ? 'Switch to Swahili' : 'Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
+      <button className="language" aria-label={i18n.language === 'en' ? 'EN · Switch to Swahili' : 'SW · Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
       <NavLink to="/account/security" className="role-chip" aria-label={t('changePassword')}><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
     </div>
   </header>;
