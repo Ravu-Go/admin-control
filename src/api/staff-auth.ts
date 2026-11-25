@@ -8,6 +8,8 @@ export type StaffMfaCode = components['schemas']['MfaCode'];
 export type StaffMfaSetup = components['schemas']['MfaSetup'];
 export type StaffPasswordCodeRequest = components['schemas']['StaffPasswordCodeRequest'];
 export type StaffPasswordChangeRequest = components['schemas']['StaffPasswordChangeRequest'];
+export type StaffStepUpRequest = components['schemas']['StepUpRequest'];
+export type StaffStepUp = components['schemas']['StepUp'];
 export class StaffAuthError extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
@@ -30,7 +32,7 @@ function csrfToken() {
   try { return decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.slice(11) || ''); }
   catch { return ''; }
 }
-async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | Record<string, never>) {
+async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | StaffStepUpRequest | Record<string, never>, signal?: AbortSignal) {
   const token = body ? csrfToken() : '';
   if (body && !token) throw new StaffAuthError(419, 'csrf_expired');
   let response: Response;
@@ -38,7 +40,7 @@ async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPas
     response = await fetch(new URL(path, origin()), {
       method: body ? 'POST' : 'GET', credentials: 'include', redirect: 'error', cache: 'no-store',
       headers: { Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15_000),
+      ...(body ? { body: JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     });
   } catch { throw new StaffAuthError(0, 'unavailable'); }
   if (!response.ok) throw new StaffAuthError(response.status, response.status === 401 ? 'unauthenticated' : 'request_failed');
@@ -77,4 +79,12 @@ export async function sendPasswordCode(values: StaffPasswordCodeRequest): Promis
 export async function changeStaffPassword(values: StaffPasswordChangeRequest): Promise<void> {
   const result = stateSchema.parse(data(await request('/api/v1/admin/console/auth/password/change', values)));
   if (result.state !== 'logged_out') throw new StaffAuthError(0, 'unavailable');
+}
+
+export async function reauthenticateStaff(values: StaffStepUpRequest, signal?: AbortSignal): Promise<StaffStepUp> {
+  await request('/sanctum/csrf-cookie', undefined, signal);
+  const result = z.object({ action: z.string(), expires_at: z.iso.datetime({ offset: true }) }).strict()
+    .parse(data(await request('/api/v1/admin/console/auth/step-up', values, signal)));
+  if (result.action !== values.action || Date.parse(result.expires_at) <= Date.now()) throw new StaffAuthError(401, 'step_up_expired');
+  return result;
 }

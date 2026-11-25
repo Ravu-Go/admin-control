@@ -93,6 +93,7 @@ input,textarea { border: 2px solid var(--color-line); border-radius: var(--radiu
 .login-back { margin-top: 24px; padding: 8px 0; color: var(--color-blue); font-size: 12px; font-weight: 700; }
 .role-chip { text-decoration: none; color: var(--color-ink); }
 .password-change { max-width: 440px; }
+.identity-dialog input { display: block; width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); }
 .password-change form { display: grid; gap: 10px; margin: 24px 0; }
 .password-change label { font-size: 12px; font-weight: 700; margin-top: 12px; }
 .password-change input { width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); }
