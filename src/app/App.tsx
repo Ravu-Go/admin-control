@@ -11,6 +11,7 @@ import { LoginPage, safeReturnPath } from './LoginPage';
 import { useStaffSession } from './StaffSession';
 import { PasswordChange } from './PasswordChange';
 import { IdentityVerificationDialog } from '../design/IdentityVerificationDialog';
+import { canOpenRoute, routePermissions } from './permissions';
 
 function ReauthenticationPreview() {
   const { t } = useTranslation();
@@ -63,6 +64,11 @@ function NotConnected() {
   const { t } = useTranslation();
   return <Panel title={t('noFeature')} description={t('noFeatureCopy')}><Link className="button secondary" to="/">{t('returnPreview')}</Link></Panel>;
 }
+function AccessDenied() {
+  const { t } = useTranslation();
+  const { refresh } = useStaffSession();
+  return <Panel title={t('permissionDenied')}><Button kind="secondary" onClick={() => void refresh()}>{t('reloadPermissions')}</Button></Panel>;
+}
 export function App() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -71,6 +77,7 @@ export function App() {
   if (checking) return <div className="session-check" role="status">{t('checkingSession')}</div>;
   if (!session) return <Navigate to="/login" replace state={{ returnTo: safeReturnPath(pathname) }}/>;
   const states = pathname === '/playground/states';
+  const denied = pathname in routePermissions && !canOpenRoute(session.permissions, pathname);
   if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
-  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}><Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes></AppShell>;
+  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}>{denied ? <AccessDenied/> : <Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes>}</AppShell>;
 }

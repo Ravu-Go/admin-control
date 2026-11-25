@@ -7,6 +7,7 @@ export type StaffAuthState = components['schemas']['AuthState'];
 export type StaffMfaCode = components['schemas']['MfaCode'];
 export type StaffMfaSetup = components['schemas']['MfaSetup'];
 export type StaffPasswordCodeRequest = components['schemas']['StaffPasswordCodeRequest'];
+export type StaffPasswordCodeSent = components['schemas']['StaffPasswordCodeSent'];
 export type StaffPasswordChangeRequest = components['schemas']['StaffPasswordChangeRequest'];
 export type StaffStepUpRequest = components['schemas']['StepUpRequest'];
 export type StaffStepUp = components['schemas']['StepUp'];
@@ -72,12 +73,13 @@ export async function setupStaffMfa(): Promise<StaffMfaSetup> {
 export async function confirmStaffMfa(values: StaffMfaCode): Promise<StaffAuthState> {
   return stateSchema.parse(data(await request('/api/v1/admin/console/auth/mfa/confirm', values)));
 }
-export async function sendPasswordCode(values: StaffPasswordCodeRequest): Promise<void> {
-  await request('/sanctum/csrf-cookie');
-  await request('/api/v1/admin/console/auth/password/code', values);
+export async function sendPasswordCode(values: StaffPasswordCodeRequest, signal?: AbortSignal): Promise<StaffPasswordCodeSent> {
+  await request('/sanctum/csrf-cookie', undefined, signal);
+  if (signal?.aborted) throw new StaffAuthError(0, 'unavailable');
+  return z.object({ expires_in: z.literal(600), resend_after: z.literal(60) }).strict().parse(data(await request('/api/v1/admin/console/auth/password/code', values, signal)));
 }
-export async function changeStaffPassword(values: StaffPasswordChangeRequest): Promise<void> {
-  const result = stateSchema.parse(data(await request('/api/v1/admin/console/auth/password/change', values)));
+export async function changeStaffPassword(values: StaffPasswordChangeRequest, signal?: AbortSignal): Promise<void> {
+  const result = stateSchema.parse(data(await request('/api/v1/admin/console/auth/password/change', values, signal)));
   if (result.state !== 'logged_out') throw new StaffAuthError(0, 'unavailable');
 }
 

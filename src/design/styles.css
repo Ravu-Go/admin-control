@@ -102,3 +102,43 @@ input,textarea { border: 2px solid var(--color-line); border-radius: var(--radiu
 .login-page .demo-banner { padding: 4px 8px; border-radius: var(--radius-badge); }
 @media (max-width: 900px) { .login-page { grid-template-columns: minmax(280px,40%) 1fr; }.login-brand { padding: 40px 28px; }.login-main { padding: 100px 32px 90px; }.login-languages { right: 32px; }.login-brand-copy h2 { font-size: 36px; } }
 @media (max-width: 640px) { .login-page { display: block; }.login-brand { min-height: 0; padding: 28px 24px; flex-direction: row; align-items: center; gap: 24px; }.login-brand>.ravu-logo { width: 40px; height: 58px; }.login-brand-copy { margin: 0; padding: 0; }.login-brand-copy h2 { font-size: 22px; line-height: 28px; margin: 0; letter-spacing: -.02em; }.login-brand-copy .login-eyebrow,.login-brand-copy>p:last-child,.login-brand-footer { display: none; }.login-main { min-height: calc(100dvh - 114px); align-items: flex-start; padding: 88px 24px 88px; }.login-languages { right: 24px; top: 24px; }.login-form-container h1 { font-size: 28px; line-height: 36px; }.login-description { margin-bottom: 28px; }.login-page .demo-banner { right: 8px; max-width: calc(100vw - 16px); white-space: normal; } }
+
+/* Owner-requested email verification refresh: existing Ravu tokens, native input. */
+.nav-item.nav-disabled { opacity: .5; cursor: default; }
+.password-change { max-width: 480px; }
+.password-steps { display: flex; gap: 18px; list-style: none; padding: 0; margin: 0 0 24px; }
+.password-steps li { display: flex; align-items: center; gap: 8px; color: var(--color-mutedAccessible); font-size: 11px; font-weight: 600; }
+.password-steps li>span { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border: 1px solid var(--color-line); border-radius: 50%; background: var(--color-white); }
+.password-steps .is-active { color: var(--color-blue); }
+.password-steps .is-active>span { background: var(--color-blue); border-color: var(--color-blue); color: var(--color-white); }
+.password-steps .is-complete { color: var(--color-success); }
+.password-steps .is-complete>span { border-color: var(--color-success); }
+.password-verification-card { border: 1px solid var(--color-line); border-radius: var(--radius-card); padding: 24px; background: var(--color-white); }
+.verification-heading { display: flex; gap: 14px; align-items: flex-start; }
+.verification-icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-navigation); background: var(--color-pale); color: var(--color-blue); }
+.verification-heading h2 { margin: 0 0 6px; font-size: 18px; line-height: 24px; font-weight: 700; letter-spacing: -.02em; }
+.verification-heading p { color: var(--color-mutedAccessible); margin: 0; }
+.password-change form { margin: 22px 0 0; gap: 8px; }
+.password-change label { display: block; font-size: 12px; margin: 12px 0 2px; }
+.password-change input { font-size: 16px; color: var(--color-ink); }
+.password-change .password-field input { padding-right: 78px; }
+.password-change .verification-submit { width: 100%; min-height: 48px; margin-top: 14px; font-size: 12px; white-space: normal; }
+.password-change .verification-sent { color: var(--color-success); margin: 18px 0 0; padding: 10px 12px; border-left: 2px solid var(--color-success); background: var(--color-light); }
+.verification-code-control { position: relative; margin-top: 8px; }
+.verification-code-slots { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 8px; }
+.verification-code-slots>span { display: grid; place-items: center; height: 54px; border: 1px solid var(--color-line); border-radius: var(--radius-button); font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--color-light); }
+.verification-code-control input { position: absolute; inset: 0; height: 100%; min-height: 0; padding: 0; border: 0; color: transparent; caret-color: transparent; background: transparent; box-shadow: none; cursor: text; }
+.verification-code-control input::selection { color: transparent; background: transparent; }
+.verification-code-control input:focus-visible { outline: 2px solid var(--color-blue); outline-offset: 4px; }
+.verification-code-control[data-focused=true] .is-current { border: 2px solid var(--color-blue); background: var(--color-pale); }
+.verification-code-control:has(input[aria-invalid=true]) .verification-code-slots>span { border-color: var(--color-danger); }
+.password-change .verification-expiry { margin: 0 0 12px; color: var(--color-mutedAccessible); font-variant-numeric: tabular-nums; font-size: 11px; }
+.password-change .password-policy { margin: 0; color: var(--color-mutedAccessible); font-size: 11px; line-height: 18px; }
+.verification-resend { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--color-line); }
+.verification-resend p { color: var(--color-mutedAccessible); margin: 0 0 4px; }
+.verification-resend-button { padding: 8px 0; min-height: 44px; color: var(--color-blue); font-size: 12px; font-weight: 700; }
+.verification-resend-button:disabled { color: var(--color-mutedAccessible); opacity: 1; }
+.verification-resend-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.password-change .verification-security-note { display: flex; align-items: flex-start; justify-content: center; gap: 8px; color: var(--color-mutedAccessible); font-size: 11px; margin: 18px 0 0; }
+.verification-security-note svg { flex-shrink: 0; }
+@media (max-width:640px) { .password-verification-card { padding: 20px 16px; }.password-steps { gap: 12px; }.verification-code-slots { gap: 6px; }.verification-code-slots>span { height: 48px; font-size: 22px; }.verification-heading { gap: 10px; }.verification-heading h2 { font-size: 17px; }.verification-icon { width: 38px; height: 38px; } }
