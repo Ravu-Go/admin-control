@@ -29,3 +29,16 @@ test('branded login desktop and mobile review', async ({ page }, testInfo) => {
     await testInfo.attach('login-' + viewport.width, { path: screenshotPath, contentType: 'image/png' });
   }
 });
+
+test('identity verification preview desktop and mobile review stays private', async ({ page }, testInfo) => {
+  await mockStaffApi(page, { authenticated: true });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/playground/reauthentication');
+    await page.getByRole('button', { name: 'Preview identity verification' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    const screenshotPath = testInfo.outputPath('identity-preview-' + width + '.png');
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await testInfo.attach('identity-preview-' + width, { path: screenshotPath, contentType: 'image/png' });
+  }
+});

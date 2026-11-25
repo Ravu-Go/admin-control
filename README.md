@@ -36,7 +36,7 @@ Native screenshots remain private in Ravu-API. Public frontend CI checks interac
 
 ```sh
 npm run generate:api -- /authorised/path/admin.yaml -o src/api/generated/admin.ts
-node scripts/lock-contract.mjs /authorised/path/admin.yaml
+node scripts/lock-contract.mjs /authorised/path/admin.yaml c75119ffce09db6bc28f3ac423eaab99bffe4676
 npm run verify:contract
 ```
 
@@ -58,6 +58,12 @@ The owner requested the Ravu logo, removal of “Demo workspace” and “Admin 
 
 Unauthenticated visitors to any console route are redirected to `/login`, preserving only allowlisted internal destinations. The UI restores a session only from the canonical staff bootstrap endpoint. Sign-in uses Sanctum CSRF cookies and credentialed requests to the contracted staff login/MFA/logout endpoints. Passwords and MFA codes remain in form memory and are cleared after submission; no local-storage login flag, bearer-token fallback, fake credential acceptance or preview bypass exists. Expired sessions are removed and failed logout does not claim server-side success.
 
-The staff endpoints are **planned and not implemented in the current API**. This change provides the frontend screen and guard, not the Phase 4 server authentication/RBAC/audit foundation. Until that backend is available, real sign-in fails closed with an unavailable message; no staff credentials have been created by this change. Enrollment-required responses direct staff to their administrator rather than bypassing MFA.
+Staff cookie sessions, mandatory authenticator verification, email-verified password changes and critical-action reauthentication are implemented in the API. Generated types are pinned to the merged API revision recorded in `admin-contract.lock.json`. Backend role/object policies and exhaustive audit coverage remain Phase 4 work; business feature screens remain disconnected.
 
 The original private native screenshot is retained. `tests/private/approved-differences.json` records the exact owner-approved branding/text regions excluded from the old A01 comparison; unchanged navigation and chrome remain compared. Logo visibility, removed labels and authenticated role display are asserted separately. Login desktop/mobile review captures and native design comparisons stay in private API CI. No new native login frame was supplied; the new page uses the established Inter/navy/blue tokens.
+
+## Critical-action identity verification
+
+Use `CriticalActionDialog` after the existing reason and explicit confirmation flow. Pass the canonical action, a localised action label and a context key containing record identity and the opened version. Permission loss, session expiry, cancellation and context changes block continuation. The callback receives action/expiry only; the server still enforces a single-use proof, object scope, version, audit and maker/checker. Do not automatically retry commands. Credential fields clear after submission.
+
+The nonproduction `/playground/reauthentication` route previews only the shared form with fictional inputs. It makes no authentication or business request and cannot bypass normal staff login or enable a feature screen. Production critical actions use the real API wrapper, never the preview handler.

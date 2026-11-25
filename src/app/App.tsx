@@ -10,6 +10,20 @@ import { exampleRecords, exampleTimeline } from './fixtures';
 import { LoginPage, safeReturnPath } from './LoginPage';
 import { useStaffSession } from './StaffSession';
 import { PasswordChange } from './PasswordChange';
+import { IdentityVerificationDialog } from '../design/IdentityVerificationDialog';
+
+function ReauthenticationPreview() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [notice, setNotice] = useState('');
+  return <Panel title={t('reauthPreview')} description={t('reauthPreviewCopy')}>
+    <Button onClick={() => { setNotice(''); setOpen(true); }}>{t('reauthPreview')}</Button>
+    {notice && <p role="status">{notice}</p>}
+    {open && <IdentityVerificationDialog preview contextKey="fictional-preview" canVerify deadline={Infinity}
+      actionLabel={t('reauthPreview')} verify={async () => {}} onCancel={() => setOpen(false)}
+      onVerified={() => { setNotice(t('savedPreview')); setOpen(false); }}/>}
+  </Panel>;
+}
 
 function SecurityPage() {
   const { t } = useTranslation();
@@ -58,5 +72,5 @@ export function App() {
   if (!session) return <Navigate to="/login" replace state={{ returnTo: safeReturnPath(pathname) }}/>;
   const states = pathname === '/playground/states';
   if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
-  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}><Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="*" element={<NotConnected/>}/></Routes></AppShell>;
+  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}><Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes></AppShell>;
 }

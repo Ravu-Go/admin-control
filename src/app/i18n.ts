@@ -2,6 +2,15 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 export const en = {
+  reauthTitle: "Verify your identity",
+  reauthDescription: "Confirm your identity to continue with {{action}}. Enter your current password and a fresh code from your authenticator. This does not replace the action confirmation.",
+  reauthInvalid: "The password or authenticator code could not be verified. Wait for a fresh code before trying again.",
+  reauthUnavailable: "Identity verification could not be completed. Check your connection and try again.",
+  reauthPreview: "Preview identity verification",
+  reauthPreviewCopy: "Use fictional details only. This preview sends no credentials and submits no live action.",
+  examplePassword: "Example password",
+  exampleCode: "Example authenticator code",
+
   changePassword: "Change password",
   temporaryPasswordTitle: "Replace your temporary password",
   temporaryPasswordDescription: "Verify your email before setting up your authenticator.",
@@ -89,6 +98,15 @@ export const en = {
   close: 'Close', submitted: 'Submitting…', confirmFailed: 'Action was not confirmed. Check the connection and current record before trying again.',
 };
 const sw: typeof en = {
+  reauthTitle: "Thibitisha utambulisho wako",
+  reauthDescription: "Thibitisha utambulisho wako ili kuendelea na {{action}}. Weka nenosiri lako la sasa na msimbo mpya kutoka kwenye programu yako ya uthibitishaji. Hii haibadilishi uthibitisho wa hatua.",
+  reauthInvalid: "Nenosiri au msimbo wa uthibitishaji haukuweza kuthibitishwa. Subiri msimbo mpya kabla ya kujaribu tena.",
+  reauthUnavailable: "Utambulisho haukuweza kuthibitishwa. Hakiki muunganisho wako na ujaribu tena.",
+  reauthPreview: "Onyesho la uthibitishaji wa utambulisho",
+  reauthPreviewCopy: "Tumia taarifa za kubuni pekee. Onyesho hili halitumi taarifa za kuingia wala kufanya hatua halisi.",
+  examplePassword: "Nenosiri la mfano",
+  exampleCode: "Msimbo wa uthibitishaji wa mfano",
+
   changePassword: "Badili nenosiri",
   temporaryPasswordTitle: "Badili nenosiri lako la muda",
   temporaryPasswordDescription: "Thibitisha barua pepe yako kabla ya kuunganisha programu ya uthibitishaji.",

@@ -155,7 +155,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** step up */
+        /**
+         * step up
+         * @description Requires a complete MFA session, current password, a new authenticator code, and an explicit capability grant. Proof expires after five minutes or the session deadline, is scoped to one action and is consumed on one guarded action attempt. It never grants permission or replaces confirmation, audit, object scope or maker/checker.
+         */
         post: operations["step_up"];
         delete?: never;
         options?: never;
@@ -2556,7 +2559,7 @@ export interface components {
             password: string;
             code: string;
             /** @enum {string} */
-            action: "overview.read" | "reports.read" | "accounts.read" | "accounts.manage" | "pii.disclose" | "verification.read" | "verification.review" | "sos.read" | "sos.respond" | "sos.assign" | "trips.read" | "dispatch.manage" | "disputes.manage" | "memberships.read" | "memberships.manage" | "plans.manage" | "plans.approve" | "payments.read" | "payments.reconcile" | "refunds.request" | "refunds.approve" | "refunds.execute" | "referrals.read" | "referrals.manage" | "programmes.manage" | "programmes.approve" | "rewards.request" | "rewards.approve" | "marketplace.read" | "marketplace.manage" | "marketplace.approve" | "services.read" | "services.manage" | "support.read" | "support.manage" | "communications.read" | "communications.manage" | "communications.approve" | "communications.send" | "audit.read" | "exports.create" | "access.read" | "access.manage" | "access.approve" | "settings.read" | "settings.manage" | "settings.approve" | "integrations.read" | "integrations.test";
+            action: "access.approve" | "access.manage" | "communications.send" | "exports.create" | "integrations.test" | "pii.disclose" | "plans.approve" | "plans.manage" | "programmes.approve" | "programmes.manage" | "refunds.approve" | "refunds.execute" | "refunds.request" | "rewards.approve" | "rewards.request" | "settings.approve" | "settings.manage";
         };
         StepUp: {
             action: string;
@@ -4024,7 +4027,6 @@ export interface components {
         };
         step_upResponse: {
             data: components["schemas"]["StepUp"];
-            meta: components["schemas"]["Meta"];
         };
         staff_logoutResponse: {
             data: components["schemas"]["AuthState"];
