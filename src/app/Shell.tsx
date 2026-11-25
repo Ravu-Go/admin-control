@@ -6,6 +6,7 @@ import { Icon } from '../design/Icon';
 import { BrandLogo } from './BrandLogo';
 import { useStaffSession } from './StaffSession';
 import { signOutStaff } from '../api/staff-auth';
+import { canOpenRoute } from './permissions';
 
 export function DemoBanner({ appEnv, demoMode }: { appEnv: string; demoMode: boolean }) {
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () =>
     <nav aria-label={t('navigation')}>
       {navigation.map(({ group, items }) => <section key={group} aria-labelledby={`nav-${group}`}>
         <h2 id={`nav-${group}`} className={`nav-group group-${group}`}>{t(group)}</h2>
-        {items.map(([key, href, icon, y]) => <NavLink key={key} to={href} end={href === '/'} onClick={onNavigate} style={{ top: y }} className={({ isActive }) => `nav-item ${isActive || key === 'administration' && pathname.startsWith('/playground') ? 'active' : ''}`}>
+        {items.map(([key, href, icon, y]) => !canOpenRoute(session?.permissions ?? [], href) ? <span key={key} className="nav-item nav-disabled" aria-disabled="true" style={{ top: y }}><Icon name={icon}/><span>{t(key)}</span></span> : <NavLink key={key} to={href} end={href === '/'} onClick={onNavigate} style={{ top: y }} className={({ isActive }) => `nav-item ${isActive || key === 'administration' && pathname.startsWith('/playground') ? 'active' : ''}`}>
           <Icon name={icon}/><span>{t(key)}</span>{key === 'sos' && session && session.open_sos_count !== null && <span className="sos-count" aria-label={t('openSos', { count: session.open_sos_count })}>{session.open_sos_count}</span>}
         </NavLink>)}
       </section>)}
@@ -52,7 +53,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <button className="menu-button" aria-label={t('menu')} onClick={onMenu}><Icon name="menu"/></button>
     <div className="global-search"><input ref={search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('searchLabel')}/><kbd>/</kbd>{query.length > 0 && <div className="search-results" role="status">{t('noFeature')}</div>}</div>
     <div className="topbar-actions">
-      <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>
+      {canOpenRoute(session?.permissions ?? [], '/sos') && <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>}
       <button className="language" aria-label={i18n.language === 'en' ? 'Switch to Swahili' : 'Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
       <NavLink to="/account/security" className="role-chip" aria-label={t('changePassword')}><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
     </div>
