@@ -7,7 +7,7 @@ export const bootstrapFixture = (): components['schemas']['Bootstrap'] => ({
   enabled_features: [], open_sos_count: 2,
   session_expires_at: new Date(Date.now() + 30 * 60_000).toISOString(), idle_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
 });
-export async function mockStaffApi(page: Page, options: { authenticated?: boolean; loginStatus?: number; loginState?: 'authenticated' | 'mfa_required' | 'enrollment_required'; expired?: boolean; malformedLogin?: boolean; bootstrapStatus?: number; logoutStatus?: number } = {}) {
+export async function mockStaffApi(page: Page, options: { authenticated?: boolean; loginStatus?: number; loginState?: 'authenticated' | 'mfa_required' | 'enrollment_required' | 'password_change_required'; expired?: boolean; malformedLogin?: boolean; bootstrapStatus?: number; logoutStatus?: number; passwordChangeStatus?: number } = {}) {
   const state = { authenticated: options.authenticated ?? false, loginCalls: 0, mfaCalls: 0, logoutCalls: 0, csrfHeader: '' };
   await page.context().addCookies([{ name: 'XSRF-TOKEN', value: 'fixture-csrf-proof', domain: '127.0.0.1', path: '/' }]);
   await page.route('https://staging-api.ravultd.com/**', async route => {
@@ -30,7 +30,14 @@ export async function mockStaffApi(page: Page, options: { authenticated?: boolea
       state.authenticated = next === 'authenticated';
       return json(200, { state: next, staff_id: 'STAFF-TEST-001', absolute_expires_at: bootstrapFixture().session_expires_at });
     }
-    if (path.endsWith('/auth/mfa/verify')) {
+    if (path.endsWith('/auth/mfa/setup')) return json(200, { secret: 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP', otpauth_uri: 'otpauth://totp/Ravu:test?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=Ravu' });
+    if (path.endsWith('/auth/password/code')) return json(200, { expires_in: 600, resend_after: 60 });
+    if (path.endsWith('/auth/password/change')) {
+      if (options.passwordChangeStatus) return json(options.passwordChangeStatus, null);
+      state.authenticated = false;
+      return json(200, { state: 'logged_out', staff_id: null, absolute_expires_at: null });
+    }
+    if (path.endsWith('/auth/mfa/verify') || path.endsWith('/auth/mfa/confirm')) {
       state.mfaCalls++;
       if (route.request().postDataJSON().code !== '123456') return json(401, null);
       state.authenticated = true;

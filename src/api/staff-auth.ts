@@ -5,6 +5,9 @@ export type StaffBootstrap = components['schemas']['Bootstrap'];
 export type StaffLogin = components['schemas']['LoginRequest'];
 export type StaffAuthState = components['schemas']['AuthState'];
 export type StaffMfaCode = components['schemas']['MfaCode'];
+export type StaffMfaSetup = components['schemas']['MfaSetup'];
+export type StaffPasswordCodeRequest = components['schemas']['StaffPasswordCodeRequest'];
+export type StaffPasswordChangeRequest = components['schemas']['StaffPasswordChangeRequest'];
 export class StaffAuthError extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
@@ -16,7 +19,7 @@ const bootstrapSchema: z.ZodType<StaffBootstrap> = z.object({
   open_sos_count: z.number().int().nonnegative().nullable(), session_expires_at: z.iso.datetime({ offset: true }), idle_expires_at: z.iso.datetime({ offset: true }),
 });
 const stateSchema: z.ZodType<StaffAuthState> = z.object({
-  state: z.enum(['mfa_required','enrollment_required','authenticated','logged_out']), staff_id: z.string().nullable(), absolute_expires_at: z.iso.datetime({ offset: true }).nullable(),
+  state: z.enum(['mfa_required','enrollment_required','password_change_required','authenticated','logged_out']), staff_id: z.string().nullable(), absolute_expires_at: z.iso.datetime({ offset: true }).nullable(),
 });
 function origin() {
   const url = new URL(import.meta.env.VITE_API_BASE_URL || 'https://staging-api.ravultd.com');
@@ -27,7 +30,7 @@ function csrfToken() {
   try { return decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.slice(11) || ''); }
   catch { return ''; }
 }
-async function request(path: string, body?: StaffLogin | StaffMfaCode | Record<string, never>) {
+async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | Record<string, never>) {
   const token = body ? csrfToken() : '';
   if (body && !token) throw new StaffAuthError(419, 'csrf_expired');
   let response: Response;
@@ -60,4 +63,18 @@ export async function verifyStaffMfa(values: StaffMfaCode): Promise<StaffAuthSta
 export async function signOutStaff(): Promise<void> {
   await request('/sanctum/csrf-cookie');
   await request('/api/v1/admin/console/auth/logout', {});
+}
+export async function setupStaffMfa(): Promise<StaffMfaSetup> {
+  return z.object({ secret: z.string().min(16), otpauth_uri: z.string().startsWith('otpauth://totp/') }).parse(data(await request('/api/v1/admin/console/auth/mfa/setup', {})));
+}
+export async function confirmStaffMfa(values: StaffMfaCode): Promise<StaffAuthState> {
+  return stateSchema.parse(data(await request('/api/v1/admin/console/auth/mfa/confirm', values)));
+}
+export async function sendPasswordCode(values: StaffPasswordCodeRequest): Promise<void> {
+  await request('/sanctum/csrf-cookie');
+  await request('/api/v1/admin/console/auth/password/code', values);
+}
+export async function changeStaffPassword(values: StaffPasswordChangeRequest): Promise<void> {
+  const result = stateSchema.parse(data(await request('/api/v1/admin/console/auth/password/change', values)));
+  if (result.state !== 'logged_out') throw new StaffAuthError(0, 'unavailable');
 }

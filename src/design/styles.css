@@ -91,6 +91,13 @@ input,textarea { border: 2px solid var(--color-line); border-radius: var(--radiu
 .login-error { border-left: 3px solid var(--color-danger); padding-left: 12px; }
 .login-help { margin: 32px 0 0; padding-top: 24px; border-top: 1px solid var(--color-line); color: var(--color-mutedAccessible); font-size: 12px; line-height: 20px; }
 .login-back { margin-top: 24px; padding: 8px 0; color: var(--color-blue); font-size: 12px; font-weight: 700; }
+.role-chip { text-decoration: none; color: var(--color-ink); }
+.password-change { max-width: 440px; }
+.password-change form { display: grid; gap: 10px; margin: 24px 0; }
+.password-change label { font-size: 12px; font-weight: 700; margin-top: 12px; }
+.password-change input { width: 100%; min-height: 48px; padding: 10px 14px; border: 2px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); }
+.password-change p { font-size: 12px; line-height: 20px; }
+.enrollment-key { display: block; overflow-wrap: anywhere; padding: 16px; margin: 16px 0; background: var(--color-light); border-radius: var(--radius-button); font-size: 16px; }
 .login-page .demo-banner { padding: 4px 8px; border-radius: var(--radius-badge); }
 @media (max-width: 900px) { .login-page { grid-template-columns: minmax(280px,40%) 1fr; }.login-brand { padding: 40px 28px; }.login-main { padding: 100px 32px 90px; }.login-languages { right: 32px; }.login-brand-copy h2 { font-size: 36px; } }
 @media (max-width: 640px) { .login-page { display: block; }.login-brand { min-height: 0; padding: 28px 24px; flex-direction: row; align-items: center; gap: 24px; }.login-brand>.ravu-logo { width: 40px; height: 58px; }.login-brand-copy { margin: 0; padding: 0; }.login-brand-copy h2 { font-size: 22px; line-height: 28px; margin: 0; letter-spacing: -.02em; }.login-brand-copy .login-eyebrow,.login-brand-copy>p:last-child,.login-brand-footer { display: none; }.login-main { min-height: calc(100dvh - 114px); align-items: flex-start; padding: 88px 24px 88px; }.login-languages { right: 24px; top: 24px; }.login-form-container h1 { font-size: 28px; line-height: 36px; }.login-description { margin-bottom: 28px; }.login-page .demo-banner { right: 8px; max-width: calc(100vw - 16px); white-space: normal; } }
