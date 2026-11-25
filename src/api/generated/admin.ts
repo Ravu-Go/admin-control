@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/api/v1/admin/console/auth/password/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email-verified staff password code
+         * @description Requires current password and complete MFA session, or the limited temporary-password bootstrap session. Email code is hashed, session-bound, expires after 10 minutes, limited to five attempts, and consumed once. Successful change revokes all console and bearer sessions. Never returns the code.
+         */
+        post: operations["staff_password_code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/console/auth/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email-verified staff password change
+         * @description Requires current password and complete MFA session, or the limited temporary-password bootstrap session. Email code is hashed, session-bound, expires after 10 minutes, limited to five attempts, and consumed once. Successful change revokes all console and bearer sessions. Never returns the code.
+         */
+        post: operations["staff_password_change"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sanctum/csrf-cookie": {
         parameters: {
             query?: never;
@@ -2346,6 +2386,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        StaffPasswordCodeRequest: {
+            current_password: string;
+        };
+        StaffPasswordChangeRequest: {
+            code: string;
+            /** @description Mixed case and a number; different from current password. */
+            password: string;
+            password_confirmation: string;
+        };
+        StaffPasswordCodeSent: {
+            /** @enum {integer} */
+            expires_in: 600;
+            /** @enum {integer} */
+            resend_after: 60;
+        };
+        staff_password_codeResponse: {
+            data: components["schemas"]["StaffPasswordCodeSent"];
+        };
+        staff_password_changeResponse: {
+            data: components["schemas"]["AuthState"];
+        };
         /** @description TZS minor units at scale 100; unknown monetary amounts are nullable fields, never invented zeros. */
         Money: {
             /** @enum {string} */
@@ -2486,7 +2547,7 @@ export interface components {
         };
         AuthState: {
             /** @enum {string} */
-            state: "mfa_required" | "enrollment_required" | "authenticated" | "logged_out";
+            state: "mfa_required" | "enrollment_required" | "authenticated" | "logged_out" | "password_change_required";
             staff_id: string | null;
             absolute_expires_at: string | null;
         };
@@ -4623,6 +4684,76 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    staff_password_code: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Cookie-session CSRF proof. Never copied into logs or URLs. */
+                "X-XSRF-TOKEN": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffPasswordCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["staff_password_codeResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
+    staff_password_change: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Cookie-session CSRF proof. Never copied into logs or URLs. */
+                "X-XSRF-TOKEN": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffPasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["staff_password_changeResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
     csrf_bootstrap: {
         parameters: {
             query?: never;
