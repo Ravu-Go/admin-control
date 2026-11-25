@@ -51,3 +51,13 @@ Branch from current `staging` into `admin/phase-N-description`. Conventional com
 Owner-selected hostname: **admin.ravultd.com**, serving staging. See [Dokploy settings](deploy/DOKPLOY.md). Deployment and branch-protection configuration must be verified in the external services; source files alone do not establish them.
 
 Draft persistence is session-scoped and only accepts non-sensitive copy. Callers must scope draft keys to staff/session/record, clear them on sign-out/expiry, and re-fetch record versions on reconnect. No action is retried automatically. Confirmation retries retain their idempotency identity for unchanged input. Backend policies and audits remain mandatory in Phase 4.
+
+## Staff login and branding update
+
+The owner requested the Ravu logo, removal of “Demo workspace” and “Admin · Demo”, and a sign-in landing page before admin content. The existing company logo is reused unchanged from the API's public Swagger branding asset; it is not a Figma screenshot. The staging data notice remains required by the brief.
+
+Unauthenticated visitors to any console route are redirected to `/login`, preserving only allowlisted internal destinations. The UI restores a session only from the canonical staff bootstrap endpoint. Sign-in uses Sanctum CSRF cookies and credentialed requests to the contracted staff login/MFA/logout endpoints. Passwords and MFA codes remain in form memory and are cleared after submission; no local-storage login flag, bearer-token fallback, fake credential acceptance or preview bypass exists. Expired sessions are removed and failed logout does not claim server-side success.
+
+The staff endpoints are **planned and not implemented in the current API**. This change provides the frontend screen and guard, not the Phase 4 server authentication/RBAC/audit foundation. Until that backend is available, real sign-in fails closed with an unavailable message; no staff credentials have been created by this change. Enrollment-required responses direct staff to their administrator rather than bypassing MFA.
+
+The original private native screenshot is retained. `tests/private/approved-differences.json` records the exact owner-approved branding/text regions excluded from the old A01 comparison; unchanged navigation and chrome remain compared. Logo visibility, removed labels and authenticated role display are asserted separately. Login desktop/mobile review captures and native design comparisons stay in private API CI. No new native login frame was supplied; the new page uses the established Inter/navy/blue tokens.
