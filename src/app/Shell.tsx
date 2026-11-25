@@ -3,6 +3,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { navigation } from './navigation';
 import { Icon } from '../design/Icon';
+import { BrandLogo } from './BrandLogo';
+import { useStaffSession } from './StaffSession';
+import { signOutStaff } from '../api/staff-auth';
 
 export function DemoBanner({ appEnv, demoMode }: { appEnv: string; demoMode: boolean }) {
   const { t } = useTranslation();
@@ -12,25 +15,29 @@ export function DemoBanner({ appEnv, demoMode }: { appEnv: string; demoMode: boo
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const { session, clear } = useStaffSession();
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
   return <aside className={`sidebar ${open ? 'is-open' : ''}`}>
-    <div className="brand"><span>Ravu</span><span className="brand-badge">ADMIN</span></div>
-    <button className="workspace" type="button" onClick={onNavigate}><Icon name="home" size={18}/><strong>{t('workspace')}</strong><span className="workspace-chevron">⌄</span></button>
+    <div className="brand"><BrandLogo/><span className="brand-badge">{t('staffPortal')}</span></div>
     <nav aria-label={t('navigation')}>
       {navigation.map(({ group, items }) => <section key={group} aria-labelledby={`nav-${group}`}>
         <h2 id={`nav-${group}`} className={`nav-group group-${group}`}>{t(group)}</h2>
         {items.map(([key, href, icon, y]) => <NavLink key={key} to={href} end={href === '/'} onClick={onNavigate} style={{ top: y }} className={({ isActive }) => `nav-item ${isActive || key === 'administration' && pathname.startsWith('/playground') ? 'active' : ''}`}>
-          <Icon name={icon}/><span>{t(key)}</span>{key === 'sos' && <span className="sos-count" aria-label={t('openSos', { count: 2 })}>2</span>}
+          <Icon name={icon}/><span>{t(key)}</span>{key === 'sos' && session && session.open_sos_count !== null && <span className="sos-count" aria-label={t('openSos', { count: session.open_sos_count })}>{session.open_sos_count}</span>}
         </NavLink>)}
       </section>)}
     </nav>
-    <div className="sidebar-profile"><span className="avatar">A</span><div><strong>{t('adminDemo')}</strong><small>{t('location')}</small></div><Icon name="arrow" size={14}/></div>
-    <NavLink to="/session" className="security-link" onClick={onNavigate}><Icon name="logout"/>{t('signOut')}</NavLink>
+    <div className="sidebar-profile"><Icon name="shield" size={24}/><div><strong>{session?.role}</strong><small>{t('location')}</small></div></div>
+    <button className="security-link" type="button" disabled={signingOut} onClick={() => { setSigningOut(true); setLogoutError(false); void signOutStaff().then(clear).catch(() => setLogoutError(true)).finally(() => setSigningOut(false)); }}><Icon name="logout"/>{t(signingOut ? 'signingOut' : 'signOut')}</button>
+    {logoutError && <p role="alert" className="logout-error">{t('logoutFailed')}</p>}
     <small className="sidebar-footer">RAVU CONTROL CENTRE</small>
   </aside>;
 }
 
 export function TopBar({ onMenu }: { onMenu: () => void }) {
   const { t, i18n } = useTranslation();
+  const { session } = useStaffSession();
   const search = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   useEffect(() => {
@@ -45,9 +52,9 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <button className="menu-button" aria-label={t('menu')} onClick={onMenu}><Icon name="menu"/></button>
     <div className="global-search"><input ref={search} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('search')} aria-label={t('searchLabel')}/><kbd>/</kbd>{query.length > 0 && <div className="search-results" role="status">{t('noFeature')}</div>}</div>
     <div className="topbar-actions">
-      <NavLink to="/sos" className="button danger topbar-sos">{t('openSos', { count: 2 })}</NavLink>
+      <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>
       <button className="language" aria-label={i18n.language === 'en' ? 'Switch to Swahili' : 'Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
-      <div className="role-chip"><strong>{t('adminDemo')}</strong><small>{t('access')}</small></div>
+      <div className="role-chip"><strong>{session?.role}</strong><small>{t('access')}</small></div>
     </div>
   </header>;
 }

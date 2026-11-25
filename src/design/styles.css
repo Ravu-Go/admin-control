@@ -54,3 +54,43 @@ input,textarea { border: 2px solid var(--color-line); border-radius: var(--radiu
 .filter-tabs { display: flex; gap: 12px; margin-top: 24px; }
 .filter-tabs button { padding: 10px 16px; border: 2px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); }
 .filter-tabs button[aria-pressed=true] { color: var(--color-white); background: var(--color-blue); border-color: var(--color-blue); }
+
+/* Owner-requested branding and sign-in landing page. */
+.ravu-logo { display: block; flex-shrink: 0; }
+.brand { top: 20px; left: 24px; width: 176px; height: 100px; display: flex; align-items: center; gap: 16px; line-height: 1.3; }
+.brand .ravu-logo { width: 58px; height: 84px; }
+.brand-badge { position: static; width: auto; height: auto; max-width: 100px; padding: 7px 9px; font-size: 10px; line-height: 14px; text-transform: uppercase; }
+.sidebar-profile strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+.sidebar-profile>.icon { margin: 0; color: var(--color-sky); }
+.logout-error { position: absolute; left: 16px; bottom: 70px; max-width: 192px; color: var(--color-white); font-size: 12px; background: var(--color-danger); padding: 8px; border-radius: var(--radius-badge); }
+.session-check { min-height: 100dvh; display: grid; place-items: center; color: var(--color-mutedAccessible); }
+.login-page { min-height: 100dvh; display: grid; grid-template-columns: minmax(380px,44%) 1fr; background: var(--color-white); }
+.login-brand { display: flex; flex-direction: column; min-height: 100dvh; padding: 64px; background: var(--color-navy); color: var(--color-white); }
+.login-brand>.ravu-logo { width: 112px; height: 162px; }
+.login-brand-copy { margin-top: auto; padding: 72px 0; max-width: 400px; }
+.login-brand-copy h2 { font-size: clamp(32px,3.5vw,50px); line-height: 1.15; letter-spacing: -.035em; font-weight: 700; margin: 12px 0 24px; }
+.login-brand-copy>p:last-child { max-width: 290px; color: var(--color-sky); font-size: 16px; line-height: 1.7; }
+.login-eyebrow { font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+.login-brand-copy .login-eyebrow { color: var(--color-sky); }
+.login-brand-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--color-sky); }
+.login-main { position: relative; min-height: 100dvh; min-width: 0; margin: 0; padding: 100px 48px 90px; display: flex; align-items: center; justify-content: center; }
+.login-languages { position: absolute; right: 48px; top: 40px; display: flex; gap: 4px; }
+.login-languages button { min-width: 44px; min-height: 40px; border-radius: var(--radius-badge); color: var(--color-mutedAccessible); font-size: 12px; font-weight: 700; }
+.login-languages button[aria-pressed=true] { color: var(--color-navy); background: var(--color-pale); }
+.login-form-container { width: min(100%,400px); }
+.login-form-container>.login-eyebrow { color: var(--color-mutedAccessible); }
+.login-form-container h1 { font-size: 32px; line-height: 40px; letter-spacing: -.03em; font-weight: 700; margin: 12px 0; }
+.login-description { margin: 0 0 36px; color: var(--color-mutedAccessible); line-height: 24px; }
+.login-form-container label { display: block; margin: 22px 0 8px; font-size: 12px; font-weight: 700; }
+.login-form-container input { width: 100%; height: 50px; padding: 12px 14px; color: var(--color-ink); }
+.password-field { position: relative; }
+.password-field input { padding-right: 90px; }
+.password-field button { position: absolute; top: 3px; right: 3px; bottom: 3px; min-width: 70px; padding: 0 10px; color: var(--color-mutedAccessible); font-size: 12px; font-weight: 700; border-radius: var(--radius-badge); }
+.login-submit { width: 100%; min-height: 50px; margin-top: 28px; font-size: 14px; }
+.login-error,.field-error { color: var(--color-danger); font-size: 12px; line-height: 20px; margin-top: 12px; }
+.login-error { border-left: 3px solid var(--color-danger); padding-left: 12px; }
+.login-help { margin: 32px 0 0; padding-top: 24px; border-top: 1px solid var(--color-line); color: var(--color-mutedAccessible); font-size: 12px; line-height: 20px; }
+.login-back { margin-top: 24px; padding: 8px 0; color: var(--color-blue); font-size: 12px; font-weight: 700; }
+.login-page .demo-banner { padding: 4px 8px; border-radius: var(--radius-badge); }
+@media (max-width: 900px) { .login-page { grid-template-columns: minmax(280px,40%) 1fr; }.login-brand { padding: 40px 28px; }.login-main { padding: 100px 32px 90px; }.login-languages { right: 32px; }.login-brand-copy h2 { font-size: 36px; } }
+@media (max-width: 640px) { .login-page { display: block; }.login-brand { min-height: 0; padding: 28px 24px; flex-direction: row; align-items: center; gap: 24px; }.login-brand>.ravu-logo { width: 40px; height: 58px; }.login-brand-copy { margin: 0; padding: 0; }.login-brand-copy h2 { font-size: 22px; line-height: 28px; margin: 0; letter-spacing: -.02em; }.login-brand-copy .login-eyebrow,.login-brand-copy>p:last-child,.login-brand-footer { display: none; }.login-main { min-height: calc(100dvh - 114px); align-items: flex-start; padding: 88px 24px 88px; }.login-languages { right: 24px; top: 24px; }.login-form-container h1 { font-size: 28px; line-height: 36px; }.login-description { margin-bottom: 28px; }.login-page .demo-banner { right: 8px; max-width: calc(100vw - 16px); white-space: normal; } }

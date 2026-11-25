@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { mockStaffApi } from './support/staff-api';
+test.beforeEach(async ({ page }) => { await mockStaffApi(page, { authenticated: true }); });
 test('shell navigation, language, keyboard and confirmation', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back, Admin');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back');
   await page.keyboard.press('/');
   await expect(page.getByRole('textbox', { name: 'Search accounts, trips, payments and cases' })).toBeFocused();
   await page.getByRole('button', { name: 'Switch to Swahili' }).click();

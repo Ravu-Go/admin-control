@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { AppShell } from './Shell';
@@ -7,6 +7,8 @@ import { Button, BilingualPreview, ConfirmDialog, EvidencePanel, KeyboardHints, 
 import { DataTable } from '../design/DataTable';
 import { ConnectionLostState, EmptyState, LoadingState, PermissionState } from '../design/States';
 import { exampleRecords, exampleTimeline } from './fixtures';
+import { LoginPage, safeReturnPath } from './LoginPage';
+import { useStaffSession } from './StaffSession';
 
 function Playground() {
   const { t } = useTranslation();
@@ -43,6 +45,10 @@ function NotConnected() {
 export function App() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
+  const { session, checking } = useStaffSession();
+  if (pathname === '/login') return <LoginPage/>;
+  if (checking) return <div className="session-check" role="status">{t('checkingSession')}</div>;
+  if (!session) return <Navigate to="/login" replace state={{ returnTo: safeReturnPath(pathname) }}/>;
   const states = pathname === '/playground/states';
   if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
   return <AppShell title={t(states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}><Routes><Route path="/" element={<Playground/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="*" element={<NotConnected/>}/></Routes></AppShell>;

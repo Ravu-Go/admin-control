@@ -1,0 +1,7 @@
+[
+  { "x": 224, "y": 176, "width": 1216, "height": 788, "color": "light", "reason": "Operational feature content is not implemented in this shell phase." },
+  { "x": 0, "y": 0, "width": 224, "height": 128, "color": "navy", "reason": "Owner requested removal of Demo workspace and use of the actual Ravu logo." },
+  { "x": 16, "y": 848, "width": 192, "height": 66, "color": "ink", "reason": "Owner requested removal of Admin Demo; show authenticated staff role." },
+  { "x": 1226, "y": 18, "width": 182, "height": 44, "color": "white", "reason": "Owner requested removal of Admin Demo; show authenticated staff role." },
+  { "x": 256, "y": 104, "width": 900, "height": 36, "color": "light", "reason": "Welcome copy no longer assumes that every staff member is an administrator." }
+]
