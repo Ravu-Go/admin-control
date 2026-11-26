@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 const sw: Record<string, string> = {
+  "Super administrators apply changes directly. Updating a role invalidates existing scope approvals; affected staff must be reassigned.": "Wasimamizi wakuu hutekeleza mabadiliko moja kwa moja. Kubadili jukumu hubatilisha idhini za wigo; watumishi walioathirika lazima wapangiwe tena.",
   "Staff roles & permissions": "Majukumu na ruhusa za watumishi",
   "Least privilege · Named staff only · Critical changes need re-authentication and an audit reason": "Ruhusa zinazohitajika tu · Akaunti binafsi za watumishi · Mabadiliko muhimu yanahitaji uthibitishaji mpya na sababu ya ukaguzi",
   "Access unavailable": "Ufikiaji haupatikani",
@@ -67,6 +68,13 @@ const sw: Record<string, string> = {
   "Explicit capabilities": "Ruhusa mahususi",
   "Cancel": "Ghairi",
   "Filter names on the current page. Personal names are not sent in search URLs.": "Chuja majina kwenye ukurasa huu. Majina binafsi hayatumiwi kwenye anwani za utafutaji.",
+  "Users": "Watumiaji",
+  "Add admin or staff": "Ongeza msimamizi au mtumishi",
+  "Apply change": "Tekeleza mabadiliko",
+  "Enable role": "Wezesha jukumu",
+  "Super administrator changes apply after confirmation and fresh authentication.": "Mabadiliko ya msimamizi mkuu yanatekelezwa baada ya uthibitisho na uthibitishaji mpya.",
+  "Super administrators manage staff and user access directly. MFA, confirmation and an audit reason are required.": "Wasimamizi wakuu husimamia ufikiaji wa watumishi na watumiaji moja kwa moja. Uthibitishaji wa hatua nyingi, uthibitisho na sababu ya ukaguzi vinahitajika.",
+  "Change applied. New staff must accept their invitation and enroll MFA.": "Mabadiliko yametekelezwa. Watumishi wapya lazima wakubali mwaliko na kusanidi uthibitishaji wa hatua nyingi.",
   "Review request": "Hakiki ombi"
 };
 export function useAccessText() {

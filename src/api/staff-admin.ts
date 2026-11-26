@@ -15,9 +15,9 @@ const permission = z.custom<Role['permissions'][number]>(value => typeof value =
 const staff: z.ZodType<Staff> = z.object({ ...metadata, display_name: z.string(), email_masked: z.string(), role_ids: z.array(z.string()), status: z.enum(['active', 'suspended']), mfa_enrolled: z.boolean() });
 const role: z.ZodType<Role> = z.object({ ...metadata, name: z.string(), name_sw: z.string(), key: z.string(), enabled: z.boolean(), protected: z.boolean(), defaults: z.boolean(), permissions: z.array(permission) });
 const scope = z.object({ kind: z.enum(['global', 'area']), area_id: z.number().int().positive().nullable() });
-const access: z.ZodType<AccessRequest> = z.object({ ...metadata, kind: z.enum(['invite', 'staff', 'role']), subject_id: z.string().nullable(), subject_version: z.number().int().positive().nullable(), status: z.enum(['pending', 'approved', 'rejected']), requested_by: z.string(), approved_by: z.string().nullable(), request_hash: z.string().length(64), reason: z.string(), summary: z.object({ name: z.string(), email_masked: z.string().nullable(), role_id: z.string().nullable(), scope: scope.nullable(), status: z.string().nullable(), enabled: z.boolean().nullable(), permissions: z.array(permission).nullable() }) });
+const access: z.ZodType<AccessRequest> = z.object({ ...metadata, approval_mode: z.enum(['independent', 'super_admin']).default('independent'), kind: z.enum(['invite', 'staff', 'role']), subject_id: z.string().nullable(), subject_version: z.number().int().positive().nullable(), status: z.enum(['pending', 'approved', 'rejected']), requested_by: z.string(), approved_by: z.string().nullable(), request_hash: z.string().length(64), reason: z.string(), summary: z.object({ name: z.string(), email_masked: z.string().nullable(), role_id: z.string().nullable(), scope: scope.nullable(), status: z.string().nullable(), enabled: z.boolean().nullable(), permissions: z.array(permission).nullable() }) });
 const session: z.ZodType<Session> = z.object({ ...metadata, staff_id: z.string(), last_activity_at: z.string(), expires_at: z.string(), revoked: z.boolean(), current: z.boolean() });
-const invitation: z.ZodType<Invitation> = z.object({ ...metadata, email_masked: z.string(), role_id: z.string(), status: z.enum(['pending', 'accepted', 'revoked', 'expired']), expires_at: z.string() });
+const invitation: z.ZodType<Invitation> = z.object({ ...metadata, email_masked: z.string(), role_id: z.string().nullable(), status: z.enum(['pending', 'accepted', 'revoked', 'expired']), expires_at: z.string() });
 const base = '/api/v1/admin/console/';
 async function page<T>(path: string, schema: z.ZodType<T>, signal?: AbortSignal): Promise<Page<T>> {
   const result = z.object({ data: z.array(schema), meta: z.object({ pagination: z.object({ total: z.number().int().nonnegative(), page: z.number().int().positive(), last_page: z.number().int().positive() }) }) }).parse(await staffRequest(base + path, undefined, signal));
@@ -48,6 +48,13 @@ export async function reviewChange(record: AccessRequest, decision: 'approve' | 
 export async function revoke(path: string, version: number, reason: string, idempotencyKey: string): Promise<void> {
   z.object({ data: z.object({ revoked: z.literal(true) }) }).parse(await staffRequest(base + path, { version, reason, confirmed: true }, undefined, false, idempotencyKey));
 }
-export async function acceptInvitation(values: components['schemas']['ConsoleInvitationAccept'], signal?: AbortSignal): Promise<void> {
-  z.object({ data: z.object({ state: z.literal('sign_in_required') }) }).parse(await staffRequest(base + 'auth/invitations/accept', values, signal));
+export async function acceptInvitation(values: components['schemas']['ConsoleInvitationAccept'], signal?: AbortSignal): Promise<'staff' | 'rider' | 'driver' | 'partner'> {
+  return z.object({ data: z.object({ state: z.literal('sign_in_required'), account_kind: z.enum(['staff', 'rider', 'driver', 'partner']).default('staff') }) }).parse(await staffRequest(base + 'auth/invitations/accept', values, signal)).data.account_kind;
+}
+export type ManagedUser = components['schemas']['ManagedUser'];
+export type ManagedUserCreate = components['schemas']['ManagedUserCreate'];
+const managedUser: z.ZodType<ManagedUser> = z.object({ id: z.string(), version: z.number().int().positive(), display_name: z.string(), kind: z.enum(['rider', 'driver', 'partner']), status: z.enum(['active', 'suspended', 'closed']), email_masked: z.string().nullable(), phone_masked: z.string().nullable(), email_verified: z.boolean(), phone_verified: z.boolean(), created_at: z.string() });
+export const loadManagedUsers = (pageNumber: number, kind: string, signal?: AbortSignal) => page('managed-users?page=' + pageNumber + (kind ? '&kind=' + encodeURIComponent(kind) : ''), managedUser, signal);
+export async function createManagedUser(command: ManagedUserCreate, idempotencyKey: string): Promise<void> {
+  z.object({ data: managedUser }).parse(await staffRequest(base + 'managed-users', command, undefined, false, idempotencyKey));
 }

@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import { mockStaffApi } from './staff-api';
-export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean } = {}) {
+export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean; superAdmin?: boolean } = {}) {
   await mockStaffApi(page, { authenticated: true, permissions: ['overview.read', 'access.read', 'access.manage', 'access.approve'] });
-  const state = { proposals: 0, reviews: 0, proofs: 0, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[] };
+  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], users: [] as Record<string, unknown>[] };
   const now = '2026-11-26T10:00:00Z';
   const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
   const role = { ...metadata, id: '2', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'fictional-reviewer', enabled: true, protected: false, defaults: false, permissions: ['accounts.read'] };
@@ -14,18 +14,31 @@ export async function mockStaffManagement(page: Page, options: { forbidden?: boo
     const send = (data: unknown, status = 200) => route.fulfill({ status, headers, body: JSON.stringify({ data, meta: { server_time: now, request_id: 'fictional-management-request', pagination: { page: 1, per_page: 25, total: Array.isArray(data) ? data.length : 1, last_page: 1 } } }) });
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
     if (path === 'auth/step-up') { state.proofs++; state.proof = route.request().postDataJSON().action; return send({ action: state.proof, expires_at: new Date(Date.now() + 300_000).toISOString() }); }
+    if (path === 'bootstrap' && options.superAdmin) {
+      const { bootstrapFixture } = await import('./staff-api');
+      return send({ ...bootstrapFixture(), is_super_admin: true, permissions: ['overview.read', 'access.read', 'access.manage', 'access.approve'] });
+    }
     if (path.startsWith('auth/') || path === 'bootstrap') return route.fallback();
     if (options.forbidden) return send(null, 403);
     if (path === 'roles') return send([role]);
     if (path === 'operating-areas') return send([{ id: '1', label: 'Fictional operating area' }]);
     if (path === 'staff') return send([{ ...metadata, id: '3', display_name: 'Fictional staff colleague', email_masked: 's***@example.test', role_ids: ['2'], status: 'active', mfa_enrolled: true }]);
     if (path === 'staff-invitations' || path.endsWith('/sessions')) return send([]);
+    if (path.startsWith('managed-users') && route.request().method() === 'GET') return send(state.users);
+    if (path === 'managed-users') {
+      if (!options.superAdmin || state.proof !== 'access.manage') return send(null, 403);
+      state.proof = ''; state.members++; state.command = route.request().postDataJSON(); state.headers = await route.request().allHeaders();
+      const body = route.request().postDataJSON();
+      const user = { id: String(10 + state.members), version: 1, display_name: body.display_name, kind: body.kind, status: 'active', email_masked: 'm***@example.test', phone_masked: '+255 *** *** 678', phone_verified: false, email_verified: false, created_at: now };
+      state.users.push(user);
+      return send(user, 201);
+    }
     if (path === 'access-requests' && route.request().method() === 'GET') return send(state.requests);
     if (path === 'access-requests') {
       if (state.proof !== 'access.manage') return send(null, 403);
       state.proof = ''; state.proposals++; state.command = route.request().postDataJSON(); state.headers = await route.request().allHeaders();
       const body = route.request().postDataJSON();
-      const proposed = { ...change, id: '2', requested_by: 'STAFF-TEST-001', summary: { ...change.summary, name: typeof body.payload.name === 'string' ? body.payload.name : body.payload.name.en, email_masked: body.payload.email ? 'n***@example.test' : null, role_id: body.payload.role_id ? String(body.payload.role_id) : null, scope: body.payload.scope ?? null, enabled: body.payload.enabled ?? null, permissions: body.payload.permissions ?? null } };
+      const proposed = { ...change, id: '2', status: body.apply_immediately ? 'approved' : 'pending', approval_mode: body.apply_immediately ? 'super_admin' : 'independent', requested_by: 'STAFF-TEST-001', summary: { ...change.summary, name: typeof body.payload.name === 'string' ? body.payload.name : body.payload.name.en, email_masked: body.payload.email ? 'n***@example.test' : null, role_id: body.payload.role_id ? String(body.payload.role_id) : null, scope: body.payload.scope ?? null, enabled: body.payload.enabled ?? null, permissions: body.payload.permissions ?? null } };
       state.requests.push(proposed);
       return send(proposed, 201);
     }

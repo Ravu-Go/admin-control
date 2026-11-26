@@ -2406,6 +2406,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/console/managed-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Super-administrator directory of riders, drivers and partners */
+        get: operations["list_managed_users"];
+        put?: never;
+        /** Super administrator creates an unverified member and sends a one-use setup link */
+        post: operations["create_managed_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2554,6 +2572,8 @@ export interface components {
             session_expires_at: string;
             /** Format: date-time */
             idle_expires_at: string;
+            /** @description Verified active canonical super-administrator assignment; never inferred from a display label. */
+            is_super_admin?: boolean;
         };
         LoginRequest: {
             /** Format: email */
@@ -3757,7 +3777,7 @@ export interface components {
             created_by: string | null;
             updated_by: string | null;
             email_masked: string;
-            role_id: string;
+            role_id: string | null;
             /** @enum {string} */
             status: "pending" | "accepted" | "revoked" | "expired";
             /** Format: date-time */
@@ -3800,6 +3820,8 @@ export interface components {
                 enabled: boolean | null;
                 permissions: ("overview.read" | "reports.read" | "accounts.read" | "accounts.manage" | "pii.disclose" | "verification.read" | "verification.review" | "sos.read" | "sos.respond" | "sos.assign" | "trips.read" | "dispatch.manage" | "disputes.manage" | "memberships.read" | "memberships.manage" | "plans.manage" | "plans.approve" | "payments.read" | "payments.reconcile" | "refunds.request" | "refunds.approve" | "refunds.execute" | "referrals.read" | "referrals.manage" | "programmes.manage" | "programmes.approve" | "rewards.request" | "rewards.approve" | "marketplace.read" | "marketplace.manage" | "marketplace.approve" | "services.read" | "services.manage" | "support.read" | "support.manage" | "communications.read" | "communications.manage" | "communications.approve" | "communications.send" | "audit.read" | "exports.create" | "access.read" | "access.manage" | "access.approve" | "settings.read" | "settings.manage" | "settings.approve" | "integrations.read" | "integrations.test")[] | null;
             };
+            /** @enum {string} */
+            approval_mode: "independent" | "super_admin";
         };
         AccessCreate: {
             /** Format: int64 */
@@ -4677,6 +4699,8 @@ export interface components {
             reason: string;
             /** @enum {boolean} */
             confirmed: true;
+            /** @description Super-administrator-only direct administration; reason, confirmation, MFA and audit are required. */
+            apply_immediately?: boolean;
         };
         ConsoleInvitationAccept: {
             token: string;
@@ -4688,6 +4712,8 @@ export interface components {
         ConsoleInvitationAccepted: {
             /** @enum {string} */
             state: "sign_in_required";
+            /** @enum {string} */
+            account_kind?: "staff" | "rider" | "driver" | "partner";
         };
         ManagementArea: {
             id: string;
@@ -4707,6 +4733,43 @@ export interface components {
         };
         accept_console_invitationResponse: {
             data: components["schemas"]["ConsoleInvitationAccepted"];
+            meta: components["schemas"]["Meta"];
+        };
+        ManagedUser: {
+            id: string;
+            version: number;
+            display_name: string;
+            /** @enum {string} */
+            kind: "rider" | "driver" | "partner";
+            /** @enum {string} */
+            status: "active" | "suspended" | "closed";
+            email_masked: string | null;
+            phone_masked: string | null;
+            email_verified: boolean;
+            phone_verified: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        ManagedUserCreate: {
+            display_name: string;
+            /** Format: email */
+            email: string;
+            phone: string;
+            /** @enum {string} */
+            kind: "rider" | "driver" | "partner";
+            /** @enum {string} */
+            locale: "en" | "sw";
+            area_id?: number | null;
+            /** @enum {boolean} */
+            confirmed: true;
+            reason: string;
+        };
+        ManagedUsersResponse: {
+            data: components["schemas"]["ManagedUser"][];
+            meta: components["schemas"]["Meta"];
+        };
+        ManagedUserCreatedResponse: {
+            data: components["schemas"]["ManagedUser"];
             meta: components["schemas"]["Meta"];
         };
     };
@@ -10319,6 +10382,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["list_management_areasResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
+    list_managed_users: {
+        parameters: {
+            query?: {
+                page?: number;
+                per_page?: number;
+                status?: string;
+                kind?: "rider" | "driver" | "partner";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedUsersResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
+    create_managed_user: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                /** @description Cookie-session CSRF proof. Never copied into logs or URLs. */
+                "X-XSRF-TOKEN": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManagedUserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful response. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagedUserCreatedResponse"];
                 };
             };
             401: components["responses"]["Error401"];
