@@ -5,6 +5,7 @@ type Permission = StaffBootstrap['permissions'][number];
 export const routePermissions: Record<string, readonly Permission[]> = {
   '/administration/access': ['access.read'],
   '/administration/settings': ['settings.read'],
+  '/administration/audit': ['audit.read'],
   '/': ['overview.read'], '/accounts': ['accounts.read'], '/verification': ['verification.read'],
   '/sos': ['sos.read'], '/trips': ['trips.read'], '/memberships': ['memberships.read'],
   '/payments': ['payments.read'], '/referrals': ['referrals.read'], '/partners': ['marketplace.read'],

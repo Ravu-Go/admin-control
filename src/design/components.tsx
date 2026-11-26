@@ -5,8 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Icon } from './Icon';
 
-export function Button({ children, kind = 'primary', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: 'primary' | 'secondary' | 'danger' }) {
-  return <button type="button" className={`button ${kind}`} {...props}>{children}</button>;
+export type ButtonKind = 'primary' | 'secondary' | 'ghost' | 'danger';
+/** primary: the page's one main action. secondary: everything else. ghost: low-emphasis row actions. danger: destructive confirmations in dialogs only. */
+export function Button({ children, kind = 'primary', icon, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: ButtonKind; icon?: string }) {
+  return <button type="button" className={`button ${kind} ${className}`.trim()} data-variant={kind} {...props}>{icon && <Icon name={icon} size={16}/>}{children}</button>;
 }
 export function Panel({ title, description, children, className = '' }: { title: string; description?: string; children: ReactNode; className?: string }) {
   const id = useId();

@@ -2,15 +2,17 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStaffSession } from '../../app/StaffSession';
 import { canOpenRoute } from '../../app/permissions';
+import './AdminSections.css';
 
 /** Switch between the administration areas the signed-in staff member can open. */
-export function AdminSections({ current }: { current: 'access' | 'settings' }) {
+export function AdminSections({ current }: { current: 'access' | 'audit' | 'settings' }) {
   const { i18n } = useTranslation();
   const sw = i18n.language.startsWith('sw');
   const { session } = useStaffSession();
   const permissions = session?.permissions ?? [];
   const sections = [
-    { key: 'access', href: '/administration/access', label: sw ? 'Watumishi na majukumu' : 'Staff & roles' },
+    { key: 'access', href: '/administration/access', label: sw ? 'Watumishi na majukumu' : 'Staff and roles' },
+    { key: 'audit', href: '/administration/audit', label: sw ? 'Kumbukumbu za ukaguzi' : 'Audit log' },
     { key: 'settings', href: '/administration/settings', label: sw ? 'Mipangilio ya mfumo' : 'System settings' },
   ].filter(section => section.key === current || canOpenRoute(permissions, section.href));
   if (sections.length < 2) return null;

@@ -1,4 +1,5 @@
-import { SystemSettingsScreen } from '../modules/settings/SystemSettingsScreen';
+import { SettingsPage } from '../modules/settings/SettingsPage';
+import { AuditLogScreen } from '../modules/audit/AuditLogScreen';
 import { AdminSections } from '../modules/settings/AdminSections';
 import { useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
@@ -84,7 +85,8 @@ export function App() {
   const states = pathname === '/playground/states';
   const denied = pathname in routePermissions && !canOpenRoute(session.permissions, pathname);
   if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
-  if (pathname === '/administration/settings') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="settings"/>{denied ? <AccessDenied/> : <SystemSettingsScreen/>}</AppShell>;
+  if (pathname === '/administration/settings') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="settings"/>{denied ? <AccessDenied/> : <SettingsPage/>}</AppShell>;
+  if (pathname === '/administration/audit') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="audit"/>{denied ? <AccessDenied/> : <AuditLogScreen/>}</AppShell>;
   if (pathname === '/administration' || pathname === '/administration/access') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="access"/><StaffAccessScreen/></AppShell>;
   return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}>{denied ? <AccessDenied/> : <Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes>}</AppShell>;
 }

@@ -31,7 +31,7 @@ test('password and MFA must succeed before returning to the requested admin page
   expect(api.mfaCalls).toBe(1);
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   expect(stored).not.toContain('fictional-test-password');
-  await page.getByRole('button', { name: 'Security & sign out' }).click();
+  await page.getByRole('button', { name: 'Security and sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);
   expect(api.logoutCalls).toBe(1);
 });
@@ -86,7 +86,7 @@ test('login works with keyboard, mobile layout and Swahili copy without serious 
 test('failed sign-out does not falsely claim that the server session ended', async ({ page }) => {
   await mockStaffApi(page, { authenticated: true, logoutStatus: 503 });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Security & sign out' }).click();
+  await page.getByRole('button', { name: 'Security and sign out' }).click();
   await expect(page.getByRole('alert')).toContainText('Could not sign out');
   await expect(page.locator('.sidebar')).toBeVisible();
 });

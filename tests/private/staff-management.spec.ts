@@ -5,7 +5,7 @@ test('A22 staff administration desktop and mobile evidence stays private', async
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/administration');
-    await expect(page.getByRole('heading', { name: 'Staff roles & permissions' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
     await expect(page.getByRole('table')).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     const matrix = testInfo.outputPath(`a22-roles-${width}.png`);

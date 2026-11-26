@@ -89,11 +89,11 @@ export function SystemSettingsScreen() {
     setFailure(''); setPending({ kind: 'details', values });
   };
 
-  if (!canRead) return <Panel title={text('Settings unavailable', 'Mipangilio haipatikani')}><p>{text('You need permission to view system settings.', 'Unahitaji ruhusa kuona mipangilio ya mfumo.')}</p></Panel>;
+  if (!canRead) return <Panel title={text('App configuration unavailable', 'Usanidi wa programu haupatikani')}><p>{text('You need permission to view system settings.', 'Unahitaji ruhusa kuona mipangilio ya mfumo.')}</p></Panel>;
   const logoUrl = preview ?? current?.logo_url ?? null;
   const updated = current?.updated_at ? new Intl.DateTimeFormat(sw ? 'sw-TZ' : 'en-TZ', { timeZone: 'Africa/Dar_es_Salaam', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(current.updated_at)) + ' EAT' : null;
   return <div className="system-settings">
-    <header className="settings-intro"><h1>{text('System settings', 'Mipangilio ya mfumo')}</h1><p>{text('App configuration · Shown in the apps, the website and this console', 'Usanidi wa programu · Huonyeshwa kwenye programu, tovuti na mfumo huu')}</p></header>
+    <p className="settings-lead">{text('Shown in the apps, the website and this console.', 'Huonyeshwa kwenye programu, tovuti na mfumo huu.')}</p>
     {notice && <p role="status" className="access-notice">{notice}</p>}
     {failure && <div role="alert" className="access-notice settings-failure">{failure}<Button kind="secondary" onClick={() => { setFailure(''); setDraft(null); void profile.refetch(); }}>{text('Reload', 'Pakia upya')}</Button></div>}
     {profile.isPending ? <Panel title={text('Loading settings', 'Inapakia mipangilio')}><p role="status">{text('Retrieving the current configuration…', 'Inapata usanidi wa sasa…')}</p></Panel>
@@ -109,9 +109,9 @@ export function SystemSettingsScreen() {
           {fileError && <p className="field-error" role="alert">{fileError}</p>}
           <input ref={fileInput} id={`${id}-logo`} className="visually-hidden" type="file" tabIndex={-1} aria-label={text('Logo image file', 'Faili ya picha ya nembo')} accept={LOGO_TYPES.join(',')} aria-describedby={`${id}-logo-hint`} disabled={!canManage} onChange={chooseFile}/>
           <div className="dialog-actions settings-actions">
-            {file ? <><Button onClick={() => { setFailure(''); setPending({ kind: 'logo', file }); }}>{text('Upload logo…', 'Pakia nembo…')}</Button><Button kind="secondary" onClick={clearFile}>{text('Cancel', 'Ghairi')}</Button></>
+            {file ? <><Button kind="secondary" onClick={() => { setFailure(''); setPending({ kind: 'logo', file }); }}>{text('Upload logo…', 'Pakia nembo…')}</Button><Button kind="secondary" onClick={clearFile}>{text('Cancel', 'Ghairi')}</Button></>
               : <><Button kind="secondary" disabled={!canManage} onClick={() => fileInput.current?.click()}>{text(current.logo_url ? 'Replace logo' : 'Choose logo', current.logo_url ? 'Badilisha nembo' : 'Chagua nembo')}</Button>
-                {current.logo_url && <Button kind="danger" disabled={!canManage} onClick={() => { setFailure(''); setPending({ kind: 'remove' }); }}>{text('Remove…', 'Ondoa…')}</Button>}</>}
+                {current.logo_url && <Button kind="secondary" disabled={!canManage} onClick={() => { setFailure(''); setPending({ kind: 'remove' }); }}>{text('Remove…', 'Ondoa…')}</Button>}</>}
           </div>
         </Panel>
         <Panel title={text('App details', 'Maelezo ya programu')}>
@@ -128,7 +128,7 @@ export function SystemSettingsScreen() {
             <label htmlFor={`${id}-address`}>{text('Office address', 'Anwani ya ofisi')}</label>
             <textarea id={`${id}-address`} rows={3} value={values.address} maxLength={500} disabled={!canManage} onChange={edit('address')}/>
             <div className="dialog-actions settings-actions">
-              <Button type="submit" disabled={!canManage || !changed}>{text('Save changes…', 'Hifadhi mabadiliko…')}</Button>
+              <Button kind="secondary" type="submit" disabled={!canManage || !changed}>{text('Save changes…', 'Hifadhi mabadiliko…')}</Button>
               {draft && changed && <Button kind="secondary" onClick={() => { setDraft(null); setTouched(false); }}>{text('Discard', 'Tupa')}</Button>}
             </div>
             {!canManage && <p className="settings-hint">{text('View only. Changing settings needs the settings.manage permission.', 'Kusoma tu. Kubadilisha mipangilio kunahitaji ruhusa ya settings.manage.')}</p>}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { navigation } from './navigation';
 import { Icon } from '../design/Icon';
 import { BrandLogo } from './BrandLogo';
+import { PageHeader } from '../design/PageHeader';
 import { useStaffSession } from './StaffSession';
 import { signOutStaff } from '../api/staff-auth';
 import { canOpenRoute } from './permissions';
@@ -60,16 +61,13 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   </header>;
 }
 
-export function PageHeader({ title, description, children, tabs, selectedTab, onTabChange }: { title: string; description: string; children?: ReactNode; tabs?: { id: string; label: string }[]; selectedTab?: string; onTabChange?: (id: string) => void }) {
-  return <div className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{tabs && <div className="filter-tabs">{tabs.map(tab => <button key={tab.id} type="button" aria-pressed={selectedTab === tab.id} onClick={() => onTabChange?.(tab.id)}>{tab.label}</button>)}</div>}{children}</div>;
-}
 
 export function AppShell({ children, title, description, hideHeader = false }: { children: ReactNode; title: string; description: string; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   return <div className="app-shell"><a className="skip-link" href="#main">{t('skip')}</a>
     <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)}/><TopBar onMenu={() => setMenuOpen(!menuOpen)}/>
-    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} description={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
+    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} subtitle={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
     <DemoBanner appEnv={import.meta.env.VITE_APP_ENV || 'staging'} demoMode={import.meta.env.VITE_DEMO_MODE !== 'false'}/>
   </div>;
 }

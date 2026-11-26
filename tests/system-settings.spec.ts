@@ -64,7 +64,7 @@ test('view-only staff see settings without edit controls and pages pass axe', as
   await expect(page.getByLabel('App name')).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Choose logo' })).toBeDisabled();
   await expect(page.getByText('View only.', { exact: false })).toBeVisible();
-  await expect(page.getByRole('navigation', { name: 'Administration sections' }).getByRole('link', { name: 'Staff & roles' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Administration sections' }).getByRole('link', { name: 'Staff and roles' })).toBeVisible();
   const results = await new AxeBuilder({ page }).include('.system-settings').analyze();
   expect(results.violations.filter(violation => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
   await page.setViewportSize({ width: 390, height: 844 });
