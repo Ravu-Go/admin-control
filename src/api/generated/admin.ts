@@ -87,8 +87,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** accept invitation */
-        post: operations["accept_invitation"];
+        /**
+         * Accept a reviewed staff invitation and set a password before MFA enrollment
+         * @description Requires current password and complete MFA session, or the limited temporary-password bootstrap session. Email code is hashed, session-bound, expires after 10 minutes, limited to five attempts, and consumed once. Successful change revokes all console and bearer sessions. Never returns the code.
+         */
+        post: operations["accept_console_invitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2111,7 +2114,8 @@ export interface paths {
         /** list access requests */
         get: operations["list_access_requests"];
         put?: never;
-        post?: never;
+        /** Request a staff invitation, staff access change or role change */
+        post: operations["propose_staff_access"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2379,6 +2383,23 @@ export interface paths {
          * @description Allowlisted harmless health operation only; never charge money or send a real member message to test connectivity.
          */
         post: operations["test_integration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/console/operating-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active operating areas for access assignment */
+        get: operations["list_management_areas"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3719,6 +3740,11 @@ export interface components {
             updated_by: string | null;
             name: string;
             permissions: ("overview.read" | "reports.read" | "accounts.read" | "accounts.manage" | "pii.disclose" | "verification.read" | "verification.review" | "sos.read" | "sos.respond" | "sos.assign" | "trips.read" | "dispatch.manage" | "disputes.manage" | "memberships.read" | "memberships.manage" | "plans.manage" | "plans.approve" | "payments.read" | "payments.reconcile" | "refunds.request" | "refunds.approve" | "refunds.execute" | "referrals.read" | "referrals.manage" | "programmes.manage" | "programmes.approve" | "rewards.request" | "rewards.approve" | "marketplace.read" | "marketplace.manage" | "marketplace.approve" | "services.read" | "services.manage" | "support.read" | "support.manage" | "communications.read" | "communications.manage" | "communications.approve" | "communications.send" | "audit.read" | "exports.create" | "access.read" | "access.manage" | "access.approve" | "settings.read" | "settings.manage" | "settings.approve" | "integrations.read" | "integrations.test")[];
+            name_sw: string;
+            key: string;
+            enabled: boolean;
+            protected: boolean;
+            defaults: boolean;
         };
         StaffInvitation: {
             id: string;
@@ -3755,13 +3781,25 @@ export interface components {
             updated_at: string;
             created_by: string | null;
             updated_by: string | null;
-            staff_id: string;
-            role_id: string;
+            /** @enum {string} */
+            kind: "invite" | "staff" | "role";
+            subject_id: string | null;
+            subject_version: number | null;
             /** @enum {string} */
             status: "pending" | "approved" | "rejected";
             requested_by: string;
             approved_by: string | null;
             request_hash: string;
+            reason: string;
+            summary: {
+                name: string;
+                email_masked: string | null;
+                role_id: string | null;
+                scope: components["schemas"]["ManagementScope"] | null;
+                status: string | null;
+                enabled: boolean | null;
+                permissions: ("overview.read" | "reports.read" | "accounts.read" | "accounts.manage" | "pii.disclose" | "verification.read" | "verification.review" | "sos.read" | "sos.respond" | "sos.assign" | "trips.read" | "dispatch.manage" | "disputes.manage" | "memberships.read" | "memberships.manage" | "plans.manage" | "plans.approve" | "payments.read" | "payments.reconcile" | "refunds.request" | "refunds.approve" | "refunds.execute" | "referrals.read" | "referrals.manage" | "programmes.manage" | "programmes.approve" | "rewards.request" | "rewards.approve" | "marketplace.read" | "marketplace.manage" | "marketplace.approve" | "services.read" | "services.manage" | "support.read" | "support.manage" | "communications.read" | "communications.manage" | "communications.approve" | "communications.send" | "audit.read" | "exports.create" | "access.read" | "access.manage" | "access.approve" | "settings.read" | "settings.manage" | "settings.approve" | "integrations.read" | "integrations.test")[] | null;
+            };
         };
         AccessCreate: {
             /** Format: int64 */
@@ -3782,13 +3820,12 @@ export interface components {
             created_by: string | null;
             updated_by: string | null;
             staff_id: string;
-            /** @enum {string} */
-            kind: "browser" | "bearer";
-            label: string;
-            last_used_at: string | null;
+            /** Format: date-time */
+            last_activity_at: string;
             /** Format: date-time */
             expires_at: string;
-            revoked_at: string | null;
+            revoked: boolean;
+            current: boolean;
         };
         AuditChange: {
             field: string;
@@ -4521,7 +4558,7 @@ export interface components {
             meta: components["schemas"]["Meta"];
         };
         revoke_invitationResponse: {
-            data: components["schemas"]["StaffInvitation"];
+            data: components["schemas"]["ManagementRevoked"];
             meta: components["schemas"]["Meta"];
         };
         request_accessResponse: {
@@ -4541,7 +4578,7 @@ export interface components {
             meta: components["schemas"]["Meta"];
         };
         revoke_staff_sessionResponse: {
-            data: components["schemas"]["Session"];
+            data: components["schemas"]["ManagementRevoked"];
             meta: components["schemas"]["Meta"];
         };
         list_auditResponse: {
@@ -4602,6 +4639,74 @@ export interface components {
         };
         test_integrationResponse: {
             data: components["schemas"]["Operation"];
+            meta: components["schemas"]["Meta"];
+        };
+        ManagementScope: {
+            /** @enum {string} */
+            kind: "global" | "area";
+            area_id: number | null;
+        };
+        ManagementInvite: {
+            name: string;
+            /** Format: email */
+            email: string;
+            role_id: number;
+            scope: components["schemas"]["ManagementScope"];
+        };
+        ManagementStaff: {
+            name: string;
+            role_id: number;
+            scope: components["schemas"]["ManagementScope"];
+            /** @enum {string} */
+            status: "active" | "suspended";
+        };
+        ManagementRole: {
+            name: {
+                en: string;
+                sw: string;
+            };
+            permissions: ("overview.read" | "reports.read" | "accounts.read" | "accounts.manage" | "pii.disclose" | "verification.read" | "verification.review" | "sos.read" | "sos.respond" | "sos.assign" | "trips.read" | "dispatch.manage" | "disputes.manage" | "memberships.read" | "memberships.manage" | "plans.manage" | "plans.approve" | "payments.read" | "payments.reconcile" | "refunds.request" | "refunds.approve" | "refunds.execute" | "referrals.read" | "referrals.manage" | "programmes.manage" | "programmes.approve" | "rewards.request" | "rewards.approve" | "marketplace.read" | "marketplace.manage" | "marketplace.approve" | "services.read" | "services.manage" | "support.read" | "support.manage" | "communications.read" | "communications.manage" | "communications.approve" | "communications.send" | "audit.read" | "exports.create" | "access.read" | "access.manage" | "access.approve" | "settings.read" | "settings.manage" | "settings.approve" | "integrations.read" | "integrations.test")[];
+            enabled: boolean;
+        };
+        StaffManagementCommand: {
+            /** @enum {string} */
+            kind: "invite" | "staff" | "role";
+            subject_id?: number | null;
+            subject_version?: number | null;
+            payload: components["schemas"]["ManagementInvite"] | components["schemas"]["ManagementStaff"] | components["schemas"]["ManagementRole"];
+            reason: string;
+            /** @enum {boolean} */
+            confirmed: true;
+        };
+        ConsoleInvitationAccept: {
+            token: string;
+            /** Format: password */
+            password: string;
+            /** Format: password */
+            password_confirmation: string;
+        };
+        ConsoleInvitationAccepted: {
+            /** @enum {string} */
+            state: "sign_in_required";
+        };
+        ManagementArea: {
+            id: string;
+            label: string;
+        };
+        ManagementRevoked: {
+            /** @enum {boolean} */
+            revoked: true;
+        };
+        propose_staff_accessResponse: {
+            data: components["schemas"]["AccessRequest"];
+            meta: components["schemas"]["Meta"];
+        };
+        list_management_areasResponse: {
+            data: components["schemas"]["ManagementArea"][];
+            meta: components["schemas"]["Meta"];
+        };
+        accept_console_invitationResponse: {
+            data: components["schemas"]["ConsoleInvitationAccepted"];
             meta: components["schemas"]["Meta"];
         };
     };
@@ -4817,7 +4922,7 @@ export interface operations {
             503: components["responses"]["Error503"];
         };
     };
-    accept_invitation: {
+    accept_console_invitation: {
         parameters: {
             query?: never;
             header: {
@@ -4829,17 +4934,17 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InvitationAccept"];
+                "application/json": components["schemas"]["ConsoleInvitationAccept"];
             };
         };
         responses: {
-            /** @description Successful response. */
-            200: {
+            /** @description Staff identity created; sign in and enroll mandatory MFA. */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["accept_invitationResponse"];
+                    "application/json": components["schemas"]["accept_console_invitationResponse"];
                 };
             };
             401: components["responses"]["Error401"];
@@ -9513,6 +9618,42 @@ export interface operations {
             503: components["responses"]["Error503"];
         };
     };
+    propose_staff_access: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                /** @description Cookie-session CSRF proof. Never copied into logs or URLs. */
+                "X-XSRF-TOKEN": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffManagementCommand"];
+            };
+        };
+        responses: {
+            /** @description Successful response. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["propose_staff_accessResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
     review_access: {
         parameters: {
             query?: never;
@@ -10150,6 +10291,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["test_integrationResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
+    list_management_areas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["list_management_areasResponse"];
                 };
             };
             401: components["responses"]["Error401"];

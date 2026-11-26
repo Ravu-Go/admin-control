@@ -5,7 +5,7 @@ import '../../app/i18n';
 import { StaffAccessPage } from './StaffAccessPage';
 const now = '2026-11-26T10:00:00Z';
 const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
-const roles = [{ ...metadata, id: 'demo-role', name: 'Fictional reviewer', permissions: ['accounts.read' as const] }];
+const roles = [{ ...metadata, id: 'demo-role', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'demo-role', enabled: true, protected: false, defaults: false, permissions: ['accounts.read' as const] }];
 const staff = [{ ...metadata, id: 'demo-staff', display_name: 'Fictional staff member', email_masked: 'f***@example.test', role_ids: ['demo-role'], status: 'active' as const, mfa_enrolled: true }];
 const props = { roles, staff, permissions: ['access.read', 'access.manage'] as const, capabilities: ['accounts.read', 'access.manage'] as const, areas: [{ id: 'demo-area', label: 'Fictional area' }], onReload: vi.fn() };
 describe('staff administration interface', () => {
@@ -47,3 +47,4 @@ describe('staff administration interface', () => {
     expect(screen.queryByText('Fictional staff member')).not.toBeInTheDocument();
   });
 });
+

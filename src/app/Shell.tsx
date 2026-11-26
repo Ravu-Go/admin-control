@@ -64,12 +64,12 @@ export function PageHeader({ title, description, children, tabs, selectedTab, on
   return <div className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{tabs && <div className="filter-tabs">{tabs.map(tab => <button key={tab.id} type="button" aria-pressed={selectedTab === tab.id} onClick={() => onTabChange?.(tab.id)}>{tab.label}</button>)}</div>}{children}</div>;
 }
 
-export function AppShell({ children, title, description }: { children: ReactNode; title: string; description: string }) {
+export function AppShell({ children, title, description, hideHeader = false }: { children: ReactNode; title: string; description: string; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   return <div className="app-shell"><a className="skip-link" href="#main">{t('skip')}</a>
     <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)}/><TopBar onMenu={() => setMenuOpen(!menuOpen)}/>
-    <main id="main" tabIndex={-1}><PageHeader title={title} description={description}/><div className="page-body" data-testid="playground-body">{children}</div></main>
+    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} description={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
     <DemoBanner appEnv={import.meta.env.VITE_APP_ENV || 'staging'} demoMode={import.meta.env.VITE_DEMO_MODE !== 'false'}/>
   </div>;
 }
