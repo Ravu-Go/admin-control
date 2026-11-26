@@ -79,6 +79,13 @@ test('an invitation token leaves the address bar and acceptance still requires s
   });
   await page.goto('/accept-invitation#token=' + 'a'.repeat(64));
   await expect(page).toHaveURL(/\/accept-invitation$/);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(page.getByRole('heading', { name: 'Accept your staff invitation', exact: true })).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Accept invitation', exact: true })).toBeInViewport();
+    expect(await page.locator('body').evaluate(element => element.scrollWidth <= window.innerWidth)).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
   await page.getByLabel('New password', { exact: true }).fill('Fictional-Password1234!');
   await page.getByLabel('Confirm password', { exact: true }).fill('Fictional-Password1234!');
   await page.getByRole('button', { name: 'Accept invitation', exact: true }).click();
