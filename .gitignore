@@ -9,3 +9,7 @@ playwright-report/
 # Native design screenshots stay in private API CI and outside this public repository.
 tests/visual/*.png
 private-visual-reference/
+
+# Per-developer agent and Impeccable settings
+.claude/settings.local.json
+.impeccable/config.local.json
