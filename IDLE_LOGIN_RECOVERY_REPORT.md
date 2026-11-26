@@ -1,0 +1,13 @@
+# Phase 4 - Recover sign-in after idle expiry
+
+Problem: the owner reports that sign-in after idle time only works after an application rebuild or full browser reload. Expected behavior is a fresh password/MFA sign-in in the existing page. The owner confirmed the preceding OTP redesign works.
+
+Root-cause evidence: the transport rejects missing or server-rejected CSRF cookies without resynchronizing them. The API deliberately expires pending password-to-MFA proofs after ten minutes and returns 401, but LoginPage previously treated that response as an invalid code and stayed on the expired MFA/enrollment screen. Tests against the original frontend reproduced seven failures across these recovery paths; eight negative-control cases passed. The current live browser was authenticated and had no captured error, so these are confirmed code/reproduction defects, not a claimed capture of the owner's exact failed request.
+
+Implementation: refresh a missing/rejected CSRF cookie once and reread it before retrying only the rejected POST. Laravel's request-forgery middleware rejects the 419 before invoking the controller. Never replay a 401, 403, 422, 429, timeout or network error; never retry endlessly or continue after cancellation. Expired MFA/enrollment attempts return to password sign-in, preserve the email, clear secrets and show an expiry message. Expired email/password-verification forms return to sign-in through their parent. Incorrect codes remain retryable on the MFA screen. No forced reload, keepalive, timeout extension, MFA bypass or server rebuild is part of the fix.
+
+Tests: the 15 focused transport/login recovery tests pass after failing seven cases before the fix. Add password-form expiry cases, browser-clock idle/relogin and pending-MFA recovery flows, persistent-CSRF retry-bound checks and same-document markers proving no reload. The API has independent real cookie/session tests for idle expiry and pending-MFA restart. Full lint/type/unit/build/browser/native visual and backend CI results are recorded in the PR before staging merge.
+
+Workflow: admin/phase-4-idle-login-recovery from staging 711d24b48964028af661c77990e345bb72177901. Canonical API contract and generated types are unchanged. Private native references remain in Ravu-API, with the exact reviewed frontend pin. Merge the associated API regression/pin PR first; require all checks before squash merging to staging and verifying Dokploy plus deployed assets. Production is not promoted.
+
+Remaining verification: replay the owner's real idle sequence after the staging fix is deployed. Cloudflare/network failures remain explicit failures; no edge-security rules are bypassed. Existing staff assignment/scope questions remain separate Phase 4 work.

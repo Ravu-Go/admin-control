@@ -7,7 +7,7 @@ import { sendPasswordCode, changeStaffPassword, StaffAuthError, type StaffPasswo
 import { VerificationCodeInput } from '../design/VerificationCodeInput';
 
 /** Credentials live only in this form; requests are cancelled on departure. */
-export function PasswordChange({ onChanged }: { onChanged: () => void }) {
+export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void; onExpired?: () => void }) {
   const { t } = useTranslation();
   const [challenge, setChallenge] = useState<{ expiresAt: number; retryAt: number } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,7 +34,11 @@ export function PasswordChange({ onChanged }: { onChanged: () => void }) {
   const remaining = challenge ? Math.max(0, Math.ceil((challenge.expiresAt - now) / 1000)) : 0;
   const cooldown = challenge ? Math.max(0, Math.ceil((challenge.retryAt - now) / 1000)) : 0;
   const expired = !!challenge && remaining === 0;
-  const report = (failure: unknown, sending: boolean) => setError(failure instanceof StaffAuthError && failure.status === 429 ? 'loginRateLimited' : failure instanceof StaffAuthError && failure.status === 422 ? sending ? 'currentPasswordInvalid' : 'passwordVerificationFailed' : failure instanceof StaffAuthError && [401,419].includes(failure.status) ? 'loginExpired' : 'passwordChangeUnavailable');
+  const report = (failure: unknown, sending: boolean) => {
+    if (failure instanceof StaffAuthError && [401,419].includes(failure.status)) {
+      form.reset(); setVisible(false); setError('loginExpired'); onExpired?.();
+    } else setError(failure instanceof StaffAuthError && failure.status === 429 ? 'loginRateLimited' : failure instanceof StaffAuthError && failure.status === 422 ? sending ? 'currentPasswordInvalid' : 'passwordVerificationFailed' : 'passwordChangeUnavailable');
+  };
   const send = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (request.current || cooldown || !currentPassword.current) return;
