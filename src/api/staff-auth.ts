@@ -15,7 +15,7 @@ export class StaffAuthError extends Error {
   constructor(public status: number, public code: string) { super(code); }
 }
 const bootstrapSchema: z.ZodType<StaffBootstrap> = z.object({
-  staff_id: z.string().min(1), role: z.string().min(1),
+  staff_id: z.string().min(1), role: z.string().min(1), is_super_admin: z.boolean().default(false),
   permissions: z.array(z.custom<StaffBootstrap['permissions'][number]>(value => typeof value === 'string')),
   environment: z.enum(['local','testing','staging','production']), demo_mode: z.boolean(), demo_banner_required: z.boolean(),
   timezone: z.literal('Africa/Dar_es_Salaam'), locale: z.enum(['en','sw']), enabled_features: z.array(z.string()),
