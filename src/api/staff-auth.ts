@@ -33,9 +33,14 @@ function csrfToken() {
   try { return decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.slice(11) || ''); }
   catch { return ''; }
 }
-async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | StaffStepUpRequest | Record<string, never>, signal?: AbortSignal) {
+async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | StaffStepUpRequest | Record<string, never>, signal?: AbortSignal, csrfRefreshed = false): Promise<unknown> {
+  if (body && signal?.aborted) throw new StaffAuthError(0, 'unavailable');
   const token = body ? csrfToken() : '';
-  if (body && !token) throw new StaffAuthError(419, 'csrf_expired');
+  if (body && !token) {
+    if (csrfRefreshed) throw new StaffAuthError(419, 'csrf_expired');
+    await request('/sanctum/csrf-cookie', undefined, signal);
+    return request(path, body, signal, true);
+  }
   let response: Response;
   try {
     response = await fetch(new URL(path, origin()), {
@@ -44,6 +49,12 @@ async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPas
       ...(body ? { body: JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     });
   } catch { throw new StaffAuthError(0, 'unavailable'); }
+  // Laravel rejects 419 before the controller runs. Refresh once, reread the
+  // cookie, then retry that rejected POST; never replay a 401, 429 or timeout.
+  if (response.status === 419 && body && !csrfRefreshed) {
+    await request('/sanctum/csrf-cookie', undefined, signal);
+    return request(path, body, signal, true);
+  }
   if (!response.ok) throw new StaffAuthError(response.status, response.status === 401 ? 'unauthenticated' : 'request_failed');
   if (response.status === 204) return null;
   if (!response.headers.get('content-type')?.includes('application/json')) throw new StaffAuthError(0, 'unavailable');

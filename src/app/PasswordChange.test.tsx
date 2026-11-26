@@ -58,6 +58,14 @@ it('shows rejected-code errors and keeps retry fields empty', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('could not be verified'); expect(changed).not.toHaveBeenCalled();
   expect(screen.getByLabelText('Email verification code')).toHaveValue('');
 });
+it.each([401,419])('expired password verification HTTP %s clears secrets and returns control to sign-in', async status => {
+  vi.mocked(changeStaffPassword).mockRejectedValue(new StaffAuthError(status, 'request_failed'));
+  const expired = vi.fn();const changed = vi.fn();render(<PasswordChange onChanged={changed} onExpired={expired}/>);
+  await send();await complete();
+  await waitFor(() => expect(expired).toHaveBeenCalledTimes(1));expect(changed).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Email verification code')).toHaveValue('');
+  expect(screen.getByLabelText('New password', { exact: true })).toHaveValue('');
+});
 it('blocks expired code submission and offers resend', async () => {
   let current = Date.now(); vi.spyOn(Date, 'now').mockImplementation(() => current);
   render(<PasswordChange onChanged={vi.fn()}/>); await send(); current += 601_000;

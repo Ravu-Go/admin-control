@@ -29,7 +29,7 @@ function ReauthenticationPreview() {
 function SecurityPage() {
   const { t } = useTranslation();
   const { clear } = useStaffSession();
-  return <Panel title={t('changePassword')}><PasswordChange onChanged={clear}/></Panel>;
+  return <Panel title={t('changePassword')}><PasswordChange onChanged={clear} onExpired={clear}/></Panel>;
 }
 
 function Playground() {
