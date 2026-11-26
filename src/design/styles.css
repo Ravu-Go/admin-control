@@ -143,3 +143,31 @@ input,textarea { border: 2px solid var(--color-line); border-radius: var(--radiu
 .verification-security-note svg { flex-shrink: 0; }
 @media (max-width:640px) { .password-verification-card { padding: 20px 16px; }.password-steps { gap: 12px; }.verification-code-slots { gap: 6px; }.verification-code-slots>span { height: 48px; font-size: 22px; }.verification-heading { gap: 10px; }.verification-heading h2 { font-size: 17px; }.verification-icon { width: 38px; height: 38px; } }
 .dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:4px}.dialog-header h2{margin:0;font-size:20px;font-weight:700;line-height:28px;color:var(--color-ink)}.dialog-close{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;margin:-4px -8px 0 0;border:0;border-radius:var(--radius-button);background:transparent;color:var(--color-mutedAccessible);cursor:pointer}.dialog-close:hover{background:var(--color-light);color:var(--color-ink)}.dialog-close:focus-visible{outline:3px solid var(--color-blue);outline-offset:2px}
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.login-form-container .verification-code-control input, .identity-dialog .verification-code-control input { height: 100%; min-height: 0; padding: 0; border: 0; background: transparent; }
+.identity-dialog .password-field input { padding-right: 78px; }
+.confirm-dialog { box-shadow: 0 24px 64px color-mix(in srgb, var(--color-navy) 30%, transparent); }
+.confirm-dialog::backdrop { background: color-mix(in srgb, var(--color-navy) 55%, transparent); opacity: 1; backdrop-filter: blur(2px); }
+.identity-dialog h2 { margin-bottom: 6px; }
+.identity-action { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--color-mutedAccessible); }
+.identity-dialog p[id$="-description"] { margin: 0 0 8px; color: var(--color-mutedAccessible); line-height: 1.5; }
+.mfa-enrollment { display: grid; grid-template-columns: 152px minmax(0, 1fr); gap: 20px; align-items: start; margin: 8px 0 4px; padding: 20px; border: 1px solid var(--color-line); border-radius: var(--radius-card); background: var(--color-white); }
+.mfa-qr { width: 152px; aspect-ratio: 1; border: 1px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); color: var(--color-ink); overflow: hidden; }
+.mfa-qr[aria-busy=true] { background: var(--color-light); }
+.mfa-qr svg { display: block; width: 100%; height: 100%; }
+.mfa-qr-quiet { fill: var(--color-white); }
+.mfa-enrollment-copy h2 { margin: 2px 0 8px; font-size: 16px; font-weight: 700; line-height: 22px; color: var(--color-ink); }
+.mfa-enrollment-copy > p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--color-mutedAccessible); }
+.mfa-manual { grid-column: 1 / -1; margin-top: -4px; padding-top: 16px; border-top: 1px solid var(--color-line); font-size: 13px; }
+.mfa-manual summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; color: var(--color-blue); width: fit-content; border-radius: var(--radius-badge); list-style: none; }
+.mfa-manual summary::-webkit-details-marker { display: none; }
+.mfa-manual summary::before { content: ''; width: 6px; height: 6px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .18s cubic-bezier(.16,1,.3,1); }
+.mfa-manual[open] summary::before { transform: rotate(45deg); }
+.mfa-manual summary:focus-visible { outline: 3px solid var(--color-blue); outline-offset: 3px; }
+.mfa-manual > p { margin: 10px 0 0; line-height: 1.5; color: var(--color-mutedAccessible); }
+.mfa-key-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.mfa-key-row .enrollment-key { flex: 1 1 auto; margin: 0; padding: 12px 14px; font-size: 14px; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; user-select: all; }
+.mfa-key-row .button { min-height: 36px; padding: 6px 12px; }
+@media (max-width: 480px) { .mfa-enrollment { grid-template-columns: 1fr; justify-items: center; text-align: center; } .mfa-qr { width: min(200px, 70vw); } .mfa-manual summary { margin: 0 auto; } .mfa-key-row { justify-content: center; } }
+.verification-code-control input:focus-visible { outline: none; }
+@media (prefers-reduced-motion: reduce) { .mfa-manual summary::before { transition: none; } }

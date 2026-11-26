@@ -10,7 +10,10 @@ test('authenticator enrollment verifies a code before opening the admin page', a
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.locator('.sidebar')).toHaveCount(0);
   await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
-  await expect(page.locator('.enrollment-key')).toBeVisible();
+  await expect(page.getByRole('img', { name: /QR code/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Set up authenticator', exact: true })).toHaveCount(0);
+  await page.getByText('Can’t scan? Enter the key instead').click();
+  await expect(page.locator('.enrollment-key')).toHaveText('JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP');
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
   await page.getByRole('button', { name: 'Verify and continue' }).click();
   await expect(page.locator('.sidebar')).toBeVisible();
@@ -70,4 +73,18 @@ test('email code form is accessible and responsive in EN and SW', async ({ page 
   await expect(page.getByRole('heading', { name: 'Angalia barua pepe yako' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('password fields can be revealed and are hidden again on submit', async ({ page }) => {
+  await mockStaffApi(page, { loginState: 'mfa_required' });
+  await page.goto('/login');
+  const password = page.getByLabel('Password', { exact: true });
+  await password.fill('fictional-test-password');
+  await expect(password).toHaveAttribute('type', 'password');
+  await page.getByRole('button', { name: 'Show password' }).click();
+  await expect(password).toHaveAttribute('type', 'text');
+  await expect(page.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Email address').fill('staff@example.test');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByLabel('Verification code', { exact: true })).toBeFocused();
 });
