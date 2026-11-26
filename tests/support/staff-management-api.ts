@@ -1,13 +1,14 @@
 import type { Page } from '@playwright/test';
 import { mockStaffApi } from './staff-api';
-export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean; superAdmin?: boolean } = {}) {
+export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean; superAdmin?: boolean; invitations?: boolean } = {}) {
   await mockStaffApi(page, { authenticated: true, permissions: ['overview.read', 'access.read', 'access.manage', 'access.approve'] });
-  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], users: [] as Record<string, unknown>[] };
+  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, resends: 0, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], invitations: [] as { id: string; version: number; status: string; [key: string]: unknown }[], users: [] as Record<string, unknown>[] };
   const now = '2026-11-26T10:00:00Z';
   const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
   const role = { ...metadata, id: '2', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'fictional-reviewer', enabled: true, protected: false, defaults: false, permissions: ['accounts.read'] };
   const change = { ...metadata, id: '1', kind: 'invite', subject_id: null, subject_version: null, status: 'pending', requested_by: options.ownRequest ? 'STAFF-TEST-001' : 'ANOTHER-TEST-STAFF', approved_by: null, request_hash: 'a'.repeat(64), reason: 'Fictional independently reviewed staffing request', summary: { name: 'Fictional invited colleague', email_masked: 'c***@example.test', role_id: '2', scope: { kind: 'global', area_id: null }, status: null, enabled: null, permissions: null } };
   state.requests.push(change);
+  state.invitations = [{ ...metadata, id: '5', email_masked: 'e***@example.test', role_id: '2', status: 'expired', expires_at: '2026-11-25T10:00:00Z' }];
   await page.route('https://staging-api.ravultd.com/api/v1/admin/console/**', async route => {
     const path = new URL(route.request().url()).pathname.split('/console/')[1] ?? '';
     const headers = { 'content-type': 'application/json', 'access-control-allow-origin': 'http://127.0.0.1:4173', 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type,x-xsrf-token,idempotency-key' };
@@ -23,7 +24,17 @@ export async function mockStaffManagement(page: Page, options: { forbidden?: boo
     if (path === 'roles') return send([role]);
     if (path === 'operating-areas') return send([{ id: '1', label: 'Fictional operating area' }]);
     if (path === 'staff') return send([{ ...metadata, id: '3', display_name: 'Fictional staff colleague', email_masked: 's***@example.test', role_ids: ['2'], status: 'active', mfa_enrolled: true }]);
-    if (path === 'staff-invitations' || path.endsWith('/sessions')) return send([]);
+    if (path === 'staff-invitations') return send(options.invitations ? state.invitations : []);
+    if (path === 'staff-invitations/5/resend') {
+      if (state.proof !== 'access.manage') return send(null, 403);
+      const body = route.request().postDataJSON();
+      const current = state.invitations[0];
+      if (!current || body.version !== current.version || !body.confirmed) return send(null, 409);
+      state.proof = ''; state.resends++; state.command = body; state.headers = await route.request().allHeaders();
+      state.invitations = [{ ...current, version: current.version + 1, status: 'pending', expires_at: '2026-11-27T10:00:00Z' }];
+      return send(state.invitations[0]);
+    }
+    if (path.endsWith('/sessions')) return send([]);
     if (path.startsWith('managed-users') && route.request().method() === 'GET') return send(state.users);
     if (path === 'managed-users') {
       if (!options.superAdmin || state.proof !== 'access.manage') return send(null, 403);

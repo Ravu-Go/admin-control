@@ -2087,6 +2087,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/console/staff-invitations/{invitation}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resend invitation */
+        post: operations["resend_invitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/console/staff/{staff}/access-requests": {
         parameters: {
             query?: never;
@@ -4576,6 +4593,10 @@ export interface components {
             meta: components["schemas"]["Meta"];
         };
         invite_staffResponse: {
+            data: components["schemas"]["StaffInvitation"];
+            meta: components["schemas"]["Meta"];
+        };
+        resend_invitationResponse: {
             data: components["schemas"]["StaffInvitation"];
             meta: components["schemas"]["Meta"];
         };
@@ -9594,6 +9615,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["revoke_invitationResponse"];
+                };
+            };
+            401: components["responses"]["Error401"];
+            403: components["responses"]["Error403"];
+            404: components["responses"]["Error404"];
+            409: components["responses"]["Error409"];
+            419: components["responses"]["Error419"];
+            422: components["responses"]["Error422"];
+            429: components["responses"]["Error429"];
+            503: components["responses"]["Error503"];
+        };
+    };
+    resend_invitation: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                /** @description Cookie-session CSRF proof. Never copied into logs or URLs. */
+                "X-XSRF-TOKEN": string;
+            };
+            path: {
+                invitation: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmedVersion"];
+            };
+        };
+        responses: {
+            /** @description Successful response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["resend_invitationResponse"];
                 };
             };
             401: components["responses"]["Error401"];

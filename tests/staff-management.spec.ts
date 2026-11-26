@@ -93,3 +93,31 @@ test('an invitation token leaves the address bar and acceptance still requires s
   expect(accepted).toBe(1);
   expect(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain('a'.repeat(64));
 });
+test('an expired invitation can be resent after confirmation and fresh authentication', async ({ page }) => {
+  const state = await mockStaffManagement(page, { invitations: true });
+  await page.goto('/administration/access');
+  await page.getByRole('tab', { name: 'Access requests' }).click();
+  await expect(page.getByRole('button', { name: 'Revoke…', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Resend…', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Resend invitation', exact: true })).toBeVisible();
+  expect(state.resends).toBe(0);
+  await confirmAndVerify(page);
+  await expect(page.getByRole('status').filter({ hasText: 'Invitation resent.' })).toBeVisible();
+  expect(state.resends).toBe(1);
+  expect(state.headers['idempotency-key']).toMatch(/^[a-f0-9-]{36}$/);
+  expect(state.command).toMatchObject({ version: 1, confirmed: true, reason: 'Fictional reviewed staff administration change' });
+  await expect(page.getByText(/^pending ·/)).toBeVisible();
+});
+test('staff forms open as closable popups over the page', async ({ page }) => {
+  await mockStaffManagement(page);
+  await page.goto('/administration/access');
+  await page.getByRole('button', { name: 'Invite staff' }).click();
+  const editor = page.locator('dialog.access-editor');
+  await expect(editor).toBeVisible();
+  await expect(editor.getByLabel('Name', { exact: true })).toBeFocused();
+  const backdrop = await editor.evaluate(element => getComputedStyle(element, '::backdrop').backgroundColor);
+  expect(backdrop).not.toMatch(/^rgb\(/); // translucent, so the page stays visible behind the popup
+  await editor.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Staff roles & permissions' })).toBeVisible();
+});

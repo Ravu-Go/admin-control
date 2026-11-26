@@ -48,6 +48,11 @@ export async function reviewChange(record: AccessRequest, decision: 'approve' | 
 export async function revoke(path: string, version: number, reason: string, idempotencyKey: string): Promise<void> {
   z.object({ data: z.object({ revoked: z.literal(true) }) }).parse(await staffRequest(base + path, { version, reason, confirmed: true }, undefined, false, idempotencyKey));
 }
+/** Issue a fresh one-use link for a pending or expired invitation; the previous link stops working. */
+export async function resendInvitation(record: Invitation, reason: string, idempotencyKey: string): Promise<Invitation> {
+  const body: components['schemas']['ConfirmedVersion'] = { version: record.version, reason, confirmed: true };
+  return z.object({ data: invitation }).parse(await staffRequest(base + `staff-invitations/${encodeURIComponent(record.id)}/resend`, body, undefined, false, idempotencyKey)).data;
+}
 export async function acceptInvitation(values: components['schemas']['ConsoleInvitationAccept'], signal?: AbortSignal): Promise<'staff' | 'rider' | 'driver' | 'partner'> {
   return z.object({ data: z.object({ state: z.literal('sign_in_required'), account_kind: z.enum(['staff', 'rider', 'driver', 'partner']).default('staff') }) }).parse(await staffRequest(base + 'auth/invitations/accept', values, signal)).data.account_kind;
 }
