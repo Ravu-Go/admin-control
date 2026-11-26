@@ -12,7 +12,7 @@ async function verify(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Verify and continue' }).click();
 }
 
-test('super admin applies an administrator invitation directly and can review their own pending request', async ({ page }) => {
+test('super admin applies an administrator invitation directly', async ({ page }) => {
   const state = await mockStaffManagement(page, { superAdmin: true, ownRequest: true });
   await page.goto('/administration');
   await page.getByRole('button', { name: 'Add admin or staff' }).click();
@@ -26,7 +26,13 @@ test('super admin applies an administrator invitation directly and can review th
   await verify(page);
   await expect(page.getByRole('status')).toContainText('Change applied');
   expect(state.command).toMatchObject({ apply_immediately: true, kind: 'invite', confirmed: true });
+});
+
+test('super admin can review their own pending request', async ({ page }) => {
+  const state = await mockStaffManagement(page, { superAdmin: true, ownRequest: true });
+  await page.goto('/administration');
   await page.getByRole('tab', { name: 'Access requests' }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('Fictional invited colleague');
   await expect(page.getByRole('button', { name: 'Approve.', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Approve.', exact: true }).click();
   await verify(page);
@@ -48,7 +54,7 @@ for (const kind of ['rider', 'driver', 'partner']) {
     await editor.getByRole('button', { name: 'Confirm creation' }).click();
     expect(state.members).toBe(0);
     await verify(page);
-    await expect(page.getByRole('status')).toContainText('User created');
+    await expect(page.getByRole('status').filter({ hasText: 'User created' })).toBeVisible();
     expect(state.members).toBe(1);
     expect(state.proofs).toBe(1);
     expect(state.command).toMatchObject({ kind, confirmed: true, email: 'member@example.test' });
