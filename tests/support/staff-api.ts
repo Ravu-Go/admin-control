@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test';
 import type { components } from '../../src/api/generated/admin';
 
-export const bootstrapFixture = (): components['schemas']['Bootstrap'] => ({
+export const bootstrapFixture = (now = Date.now()): components['schemas']['Bootstrap'] => ({
   staff_id: 'STAFF-TEST-001', role: 'Administrator', permissions: ['overview.read','accounts.read','verification.read','sos.read','trips.read','memberships.read','payments.read','referrals.read','marketplace.read','services.read','support.read','communications.read','reports.read','access.read'],
   environment: 'staging', demo_mode: true, demo_banner_required: true, timezone: 'Africa/Dar_es_Salaam', locale: 'en',
   enabled_features: [], open_sos_count: 2,
-  session_expires_at: new Date(Date.now() + 30 * 60_000).toISOString(), idle_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+  session_expires_at: new Date(now + 30 * 60_000).toISOString(), idle_expires_at: new Date(now + 15 * 60_000).toISOString(),
 });
 export async function mockStaffApi(page: Page, options: { authenticated?: boolean; permissions?: components['schemas']['Bootstrap']['permissions']; loginStatus?: number; loginState?: 'authenticated' | 'mfa_required' | 'enrollment_required' | 'password_change_required'; expired?: boolean; malformedLogin?: boolean; bootstrapStatus?: number; logoutStatus?: number; passwordChangeStatus?: number } = {}) {
   const state = { authenticated: options.authenticated ?? false, loginCalls: 0, mfaCalls: 0, logoutCalls: 0, csrfCalls: 0, csrfRejections: 0, pendingExpired: false, csrfHeader: '' };
@@ -22,7 +22,8 @@ export async function mockStaffApi(page: Page, options: { authenticated?: boolea
     }
     if (path.endsWith('/bootstrap')) {
       if (options.bootstrapStatus) return json(options.bootstrapStatus, null);
-      const bootstrap = bootstrapFixture();
+      // A new session must have future deadlines after the test advances the browser clock.
+      const bootstrap = bootstrapFixture(await page.evaluate(() => Date.now()));
       if (options.permissions) bootstrap.permissions = options.permissions;
       if (options.expired) bootstrap.session_expires_at = '2020-01-01T00:00:00Z';
       return json(state.authenticated ? 200 : 401, state.authenticated ? bootstrap : null);
