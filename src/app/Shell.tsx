@@ -55,7 +55,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <div className="topbar-actions">
       {canOpenRoute(session?.permissions ?? [], '/sos') && <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>}
       <button className="language" aria-label={i18n.language === 'en' ? 'EN · Switch to Swahili' : 'SW · Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
-      <NavLink to="/account/security" className="role-chip" aria-label={t('changePassword')}><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
+      <NavLink to="/account/security" className="role-chip"><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
     </div>
   </header>;
 }

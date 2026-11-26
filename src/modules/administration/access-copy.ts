@@ -10,7 +10,7 @@ const sw: Record<string, string> = {
   "Staff": "Watumishi",
   "Access requests": "Maombi ya ufikiaji",
   "Sessions": "Vipindi",
-  "Invite staff…": "Alika mtumishi…",
+  "Invite staff": "Alika mtumishi…",
   "Staff administration unavailable": "Usimamizi wa watumishi haupatikani",
   "Try again": "Jaribu tena",
   "Loading staff administration": "Inapakia usimamizi wa watumishi",

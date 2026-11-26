@@ -15,12 +15,12 @@ async function confirmAndVerify(page: Page) {
 test('invite form requires confirmation and fresh authentication before sending one pending request', async ({ page }) => {
   const state = await mockStaffManagement(page);
   await page.goto('/administration');
-  await page.getByRole('button', { name: 'Invite staff…' }).click();
+  await page.getByRole('button', { name: 'Invite staff' }).click();
   const editor = page.locator('dialog.access-editor');
   await editor.getByLabel('Name', { exact: true }).fill('Fictional new colleague');
   await editor.getByLabel('Email', { exact: true }).fill('new@example.test');
-  await editor.getByLabel('Role', { exact: true }).selectOption('2');
-  await editor.getByLabel('Access scope').selectOption('global');
+  await editor.getByRole('combobox', { name: 'Role', exact: true }).selectOption('2');
+  await editor.getByRole('combobox', { name: 'Access scope', exact: true }).selectOption('global');
   await editor.getByRole('button', { name: 'Review request' }).click();
   expect(state.proposals).toBe(0);
   await confirmAndVerify(page);
@@ -64,7 +64,7 @@ test('scope denial keeps the administration page closed to staff data', async ({
   await page.goto('/administration');
   await expect(page.getByRole('alert')).toContainText('scope');
   await expect(page.getByText('Fictional staff colleague')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Invite staff…' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Invite staff' })).toBeDisabled();
 });
 
 test('an invitation token leaves the address bar and acceptance still requires sign-in and MFA', async ({ page }) => {

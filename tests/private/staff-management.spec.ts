@@ -11,7 +11,7 @@ test('A22 staff administration desktop and mobile evidence stays private', async
     const matrix = testInfo.outputPath(`a22-roles-${width}.png`);
     await page.screenshot({ path: matrix, fullPage: true });
     await testInfo.attach(`a22-roles-${width}`, { path: matrix, contentType: 'image/png' });
-    await page.getByRole('button', { name: 'Invite staff.' }).click();
+    await page.getByRole('button', { name: 'Invite staff' }).click();
     await expect(page.locator('dialog.access-editor')).toBeVisible();
     const editor = testInfo.outputPath(`a22-invite-${width}.png`);
     await page.screenshot({ path: editor, fullPage: true });

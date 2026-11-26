@@ -13,7 +13,7 @@ describe('staff administration interface', () => {
     render(<StaffAccessPage {...props}/>);
     expect(screen.getByText('Granted')).toBeInTheDocument();
     expect(screen.getAllByText('No access')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Invite staff…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Invite staff' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Create role' })).toBeDisabled();
   });
   it('shows masked staff information and filters the current dataset', async () => {
@@ -29,7 +29,7 @@ describe('staff administration interface', () => {
     const user = userEvent.setup();
     const onRequestChange = vi.fn().mockResolvedValue(undefined);
     render(<StaffAccessPage {...props} onRequestChange={onRequestChange}/>);
-    await user.click(screen.getByRole('button', { name: 'Invite staff…' }));
+    await user.click(screen.getByRole('button', { name: 'Invite staff' }));
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Fictional new staff');
     await user.type(screen.getByRole('textbox', { name: 'Email' }), 'new@example.test');
     await user.selectOptions(screen.getByRole('combobox', { name: 'Role' }), 'demo-role');
