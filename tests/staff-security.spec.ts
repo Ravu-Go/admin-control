@@ -41,7 +41,7 @@ test('temporary password requires email verification and returns to sign-in', as
 test('invalid email verification keeps the staff security form open', async ({ page }) => {
   await mockStaffApi(page, { authenticated: true, passwordChangeStatus: 422 });
   await page.goto('/');
-  await page.getByRole('link', { name: 'Change password', exact: true }).click();
+  await page.getByRole('link', { name: /Change password/ }).click();
   await expect(page).toHaveURL(/\/account\/security$/);
   await page.getByLabel('Current password', { exact: true }).fill('fictional-test-password');
   await page.getByRole('button', { name: 'Send email code', exact: true }).click();
