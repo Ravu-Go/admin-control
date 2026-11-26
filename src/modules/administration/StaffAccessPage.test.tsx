@@ -19,7 +19,7 @@ describe('staff administration interface', () => {
   it('shows masked staff information and filters the current dataset', async () => {
     const user = userEvent.setup();
     render(<StaffAccessPage {...props}/>);
-    await user.click(screen.getByRole('tab', { name: 'Staff', exact: true }));
+    await user.click(screen.getByRole('tab', { name: 'Staff' }));
     expect(screen.getByText('f***@example.test')).toBeInTheDocument();
     await user.type(screen.getByRole('searchbox', { name: 'Find staff' }), 'unmatched');
     expect(screen.getByText('No staff match these filters.')).toBeInTheDocument();
@@ -30,9 +30,9 @@ describe('staff administration interface', () => {
     const onRequestChange = vi.fn().mockResolvedValue(undefined);
     render(<StaffAccessPage {...props} onRequestChange={onRequestChange}/>);
     await user.click(screen.getByRole('button', { name: 'Invite staff…' }));
-    await user.type(screen.getByRole('textbox', { name: 'Name', exact: true }), 'Fictional new staff');
-    await user.type(screen.getByRole('textbox', { name: 'Email', exact: true }), 'new@example.test');
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Role', exact: true }), 'demo-role');
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Fictional new staff');
+    await user.type(screen.getByRole('textbox', { name: 'Email' }), 'new@example.test');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Role' }), 'demo-role');
     expect(screen.getByRole('button', { name: 'Review request' })).toBeDisabled();
     await user.selectOptions(screen.getByRole('combobox', { name: 'Access scope' }), 'area');
     expect(screen.getByRole('button', { name: 'Review request' })).toBeDisabled();
