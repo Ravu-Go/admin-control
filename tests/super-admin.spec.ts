@@ -33,8 +33,8 @@ test('super admin can review their own pending request', async ({ page }) => {
   await page.goto('/administration');
   await page.getByRole('tab', { name: 'Access requests' }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Fictional invited colleague');
-  await expect(page.getByRole('button', { name: 'Approve.', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Approve.', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^Approve/ })).toBeEnabled();
+  await page.getByRole('button', { name: /^Approve/ }).click();
   await verify(page);
   expect(state.reviews).toBe(1);
 });
@@ -106,3 +106,4 @@ test('member setup directs the recipient to the Ravu app without a staff sign-in
   await expect(page.getByRole('status')).toContainText('verify your phone');
   await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
 });
+
