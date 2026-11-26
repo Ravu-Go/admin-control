@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { components } from '../../api/generated/admin';
 import { Button, ConfirmDialog, Panel, StatusBadge, type ConfirmedCommand } from '../../design/components';
 import { Icon } from '../../design/Icon';
+import { DialogHeader } from '../../design/DialogHeader';
 import './StaffAccessPage.css';
 
 type Staff = components['schemas']['Staff'];
@@ -45,7 +46,7 @@ export function StaffAccessPage(props: Props) {
     { id: 'action', header: tr('Action'), cell: ({ row }) => <Button kind="secondary" disabled={!manage || row.original.role_ids.some(id => props.roles.find(role => role.id === id)?.protected)} onClick={() => showEditor({ kind: 'staff', staff: row.original })}>{tr('Manage user')}</Button> },
   ];
   return <div className="staff-access" data-testid="staff-access-page">
-    <div className="access-intro"><h1>{tr("Staff roles & permissions")}</h1><p>{tr("Least privilege · Named staff only · Critical changes need re-authentication and an audit reason")}</p></div>
+    <div className="access-intro"><h1>{tr("Staff roles & permissions")}</h1><p>{tr("Least privilege · Named staff only")}</p></div>
     {!allowed ? <Panel title={tr("Access unavailable")}><p>{tr("You need permission to view staff administration.")}</p><Button kind="secondary" onClick={props.onReload}>{tr("Reload permissions")}</Button></Panel> : <>
       <div className="access-toolbar"><div className="access-tabs" role="tablist" aria-label={tr("Staff administration")}>
         {Object.keys(tabLabels).filter(key => key !== 'users' || props.isSuperAdmin).map((key, index, tabs) => <button key={key} id={`access-tab-${key}`} role="tab" type="button" tabIndex={tab === key ? 0 : -1} aria-selected={tab === key} aria-controls="access-panel" onKeyDown={event => { const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0; if (!direction && !['Home', 'End'].includes(event.key)) return; event.preventDefault(); const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + direction + tabs.length) % tabs.length; setTab(tabs[target] ?? key); event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[target]?.focus(); }} onClick={() => setTab(key)}>{tabLabels[key]}</button>)}
@@ -53,11 +54,10 @@ export function StaffAccessPage(props: Props) {
       {notice && <p role="status" className="access-notice">{notice}</p>}
       {props.error ? <Panel title={tr("Staff administration unavailable")}><p role="alert">{props.error}</p><Button kind="secondary" onClick={props.onReload}>{tr("Try again")}</Button></Panel> : props.loading ? <Panel title={tr("Loading staff administration")}><p role="status">{tr("Retrieving current permissions and records…")}</p></Panel> :
       <section role="tabpanel" id="access-panel" aria-labelledby={`access-tab-${tab}`}>
-        {tab === 'roles' && <Panel title={tr("Role capability matrix")}><div className="access-panel-tools"><p>{tr(props.isSuperAdmin ? "Super administrators apply changes directly. Updating a role invalidates existing scope approvals; affected staff must be reassigned." : "Changes require independent approval. Updating a role invalidates existing scope approvals; affected staff must be reassigned.")}</p><Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'role' })}>{tr("Create role")}</Button></div>
+        {tab === 'roles' && <Panel title={tr("Role capability matrix")}><div className="access-panel-tools"><p>{tr(props.isSuperAdmin ? "Role changes apply immediately. Reassign affected staff." : "Role changes need independent approval. Reassign affected staff.")}</p><Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'role' })}>{tr("Create role")}</Button></div>
           {props.roles.length === 0 ? <p>{tr("No roles are available.")}</p> : <div className="access-table-scroll"><table className="access-matrix"><thead><tr><th scope="col">{tr("Capability")}</th>{props.roles.map(role => <th key={role.id} scope="col"><strong>{role.name}</strong><small>{role.enabled ? tr('Enabled') : tr('Disabled')}</small><Button kind="secondary" disabled={!manage || role.protected} onClick={() => showEditor({ kind: 'role', role })}>{tr("Manage role")}</Button></th>)}</tr></thead><tbody>{props.capabilities.map(capability => <tr key={capability}><th scope="row">{capability}</th>{props.roles.map(role => <td key={role.id}>{role.permissions.includes(capability) ? tr('Granted') : tr('No access')}</td>)}</tr>)}</tbody></table></div>}
         </Panel>}
         {tab === 'staff' && <Panel title={tr("Staff directory")}><div className="access-panel-tools"><label>{tr("Find staff")}<input type="search" value={query} onChange={event => { setQuery(event.target.value); props.onSearch?.(event.target.value); }} placeholder={tr("Name")}/></label><span>{staff.length} / {props.totalStaff ?? props.staff.length} displayed</span></div>
-          <p>{tr("Filter names on the current page. Personal names are not sent in search URLs.")}</p>
           {staff.length === 0 ? <p>{tr('No staff match these filters.')}</p> : <DataTable rows={staff} columns={columns} externalPagination previousTimestamp={props.previousTimestamp ?? null}/>}
           {props.staffFilters}{props.pagination}
         </Panel>}
@@ -65,9 +65,9 @@ export function StaffAccessPage(props: Props) {
         {tab === 'requests' && (props.requests ?? <Panel title={tr("Access requests")}><p>{tr("Approval data is not connected yet. No access changes have been made.")}</p></Panel>)}
         {tab === 'sessions' && (props.sessions ?? <Panel title={tr("Staff sessions")}><p>{tr("Session management is not connected yet.")}</p></Panel>)}
       </section>}
-      <div className="access-security-note"><Icon name="shield"/><div><strong>{tr("No shared super-admin credentials")}</strong><p>{tr(props.isSuperAdmin ? 'Super administrators manage staff and user access directly. MFA, confirmation and an audit reason are required.' : 'Require staff MFA, session expiry and review of new access. Role changes require a second administrator. Submitting a request does not activate access.')}</p></div></div>
+      <div className="access-security-note"><Icon name="shield"/><div><strong>{tr("No shared super-admin credentials")}</strong><p>{tr(props.isSuperAdmin ? 'MFA, confirmation and an audit reason are required.' : 'MFA and a second administrator’s approval are required.')}</p></div></div>
     </>}
-    {editor && manage && <AccessEditor key={editor.staff?.id ?? editor.role?.id ?? editor.kind} editor={editor} direct={!!props.isSuperAdmin} roles={props.roles} capabilities={props.capabilities} areas={props.areas} onClose={() => setEditor(null)} onSubmit={async (values, confirmation) => { if (!props.onRequestChange) return; await props.onRequestChange(values, confirmation); setEditor(null); setNotice(tr(props.isSuperAdmin ? 'Change applied. New staff must accept their invitation and enroll MFA.' : 'Request submitted for independent review. Access has not been activated.')); }}/>} 
+    {editor && manage && <AccessEditor key={editor.staff?.id ?? editor.role?.id ?? editor.kind} editor={editor} direct={!!props.isSuperAdmin} roles={props.roles} capabilities={props.capabilities} areas={props.areas} onClose={() => setEditor(null)} onSubmit={async (values, confirmation) => { if (!props.onRequestChange) return; await props.onRequestChange(values, confirmation); setEditor(null); setNotice(tr(props.isSuperAdmin ? 'Change applied.' : 'Request submitted for independent review.')); }}/>} 
   </div>;
 }
 function AccessEditor({ editor, roles, capabilities, areas, onClose, onSubmit, direct }: {
@@ -77,7 +77,7 @@ function AccessEditor({ editor, roles, capabilities, areas, onClose, onSubmit, d
   const tr = useAccessText();
   const id = useId();
   const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close(); }, []);
+  useEffect(() => { const element = dialog.current; element?.showModal(); element?.querySelector<HTMLElement>('form input:not([type=checkbox]), form select')?.focus(); return () => element?.close(); }, []);
   const [name, setName] = useState(editor.staff?.display_name ?? editor.role?.name ?? '');
   const [nameSw, setNameSw] = useState(editor.role?.name_sw ?? '');
   const [enabled, setEnabled] = useState(editor.role?.enabled ?? false);
@@ -101,7 +101,7 @@ function AccessEditor({ editor, roles, capabilities, areas, onClose, onSubmit, d
     setConfirmation(values);
   };
   return <dialog ref={dialog} className="access-editor" aria-labelledby={`${id}-title`} onCancel={event => { event.preventDefault(); if (!confirmation) onClose(); }}>
-    <form className="access-editor-card" onSubmit={event => { event.preventDefault(); submit(); }}><h2 id={`${id}-title`}>{title}</h2><p>{tr(direct ? 'Super administrator changes apply after confirmation and fresh authentication.' : 'A reason, confirmation, fresh authentication and independent approval are required.')}</p>
+    <form className="access-editor-card" onSubmit={event => { event.preventDefault(); submit(); }}><DialogHeader id={`${id}-title`} title={title} closeLabel={tr('Close')} onClose={onClose}/>{!direct && <p>{tr('Needs independent approval.')}</p>}
       <label>{tr("Name")}<input autoFocus value={name} maxLength={120} required disabled={editor.role?.defaults} onChange={event => setName(event.target.value)}/></label>
       {editor.kind === 'role' && <><label>{tr("Name (Swahili)")}<input value={nameSw} maxLength={120} required disabled={editor.role?.defaults} onChange={event => setNameSw(event.target.value)}/></label><label className="checkbox"><input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)}/>{tr(direct ? 'Enable role' : 'Enable after independent approval')}</label>{editor.role?.defaults && <p>{tr("Approved default names and grants are fixed. Create a custom role to request different permissions.")}</p>}</>}
       {editor.kind === 'invite' && <label>{tr("Email")}<input type="email" value={email} maxLength={254} autoComplete="off" required onChange={event => setEmail(event.target.value)}/></label>}
