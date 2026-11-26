@@ -12,6 +12,8 @@ import { useStaffSession } from './StaffSession';
 import { PasswordChange } from './PasswordChange';
 import { IdentityVerificationDialog } from '../design/IdentityVerificationDialog';
 import { canOpenRoute, routePermissions } from './permissions';
+import { StaffAccessScreen } from '../modules/administration/StaffAccessScreen';
+import { AcceptStaffInvitation } from '../modules/administration/AcceptStaffInvitation';
 
 function ReauthenticationPreview() {
   const { t } = useTranslation();
@@ -73,11 +75,13 @@ export function App() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { session, checking } = useStaffSession();
+  if (pathname === '/accept-invitation') return <AcceptStaffInvitation/>;
   if (pathname === '/login') return <LoginPage/>;
   if (checking) return <div className="session-check" role="status">{t('checkingSession')}</div>;
   if (!session) return <Navigate to="/login" replace state={{ returnTo: safeReturnPath(pathname) }}/>;
   const states = pathname === '/playground/states';
   const denied = pathname in routePermissions && !canOpenRoute(session.permissions, pathname);
   if (import.meta.env.VITE_APP_ENV === 'production' && import.meta.env.VITE_DEMO_MODE === 'false') return <main className="production-gate"><h1>Ravu</h1><p>{t('noFeature')}</p></main>;
+  if (pathname === '/administration' || pathname === '/administration/access') return <AppShell title={t('administration')} description="" hideHeader><StaffAccessScreen/></AppShell>;
   return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}>{denied ? <AccessDenied/> : <Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes>}</AppShell>;
 }

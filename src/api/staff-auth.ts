@@ -33,33 +33,38 @@ function csrfToken() {
   try { return decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.slice(11) || ''); }
   catch { return ''; }
 }
-async function request(path: string, body?: StaffLogin | StaffMfaCode | StaffPasswordCodeRequest | StaffPasswordChangeRequest | StaffStepUpRequest | Record<string, never>, signal?: AbortSignal, csrfRefreshed = false): Promise<unknown> {
+export async function staffRequest(path: string, body?: object, signal?: AbortSignal, csrfRefreshed = false, idempotencyKey?: string): Promise<unknown> {
   if (body && signal?.aborted) throw new StaffAuthError(0, 'unavailable');
   const token = body ? csrfToken() : '';
   if (body && !token) {
     if (csrfRefreshed) throw new StaffAuthError(419, 'csrf_expired');
-    await request('/sanctum/csrf-cookie', undefined, signal);
-    return request(path, body, signal, true);
+    await staffRequest('/sanctum/csrf-cookie', undefined, signal);
+    return staffRequest(path, body, signal, true, idempotencyKey);
   }
   let response: Response;
   try {
     response = await fetch(new URL(path, origin()), {
       method: body ? 'POST' : 'GET', credentials: 'include', redirect: 'error', cache: 'no-store',
-      headers: { Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token } : {}) },
+      headers: { Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token } : {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     });
   } catch { throw new StaffAuthError(0, 'unavailable'); }
   // Laravel rejects 419 before the controller runs. Refresh once, reread the
   // cookie, then retry that rejected POST; never replay a 401, 429 or timeout.
   if (response.status === 419 && body && !csrfRefreshed) {
-    await request('/sanctum/csrf-cookie', undefined, signal);
-    return request(path, body, signal, true);
+    await staffRequest('/sanctum/csrf-cookie', undefined, signal);
+    return staffRequest(path, body, signal, true, idempotencyKey);
   }
-  if (!response.ok) throw new StaffAuthError(response.status, response.status === 401 ? 'unauthenticated' : 'request_failed');
+  if (!response.ok) {
+    let code = response.status === 401 ? 'unauthenticated' : 'request_failed';
+    try { const error = z.object({ error: z.string().max(100) }).parse(await response.json()); code = error.error; } catch { /* Do not display raw server messages or HTML. */ }
+    throw new StaffAuthError(response.status, code);
+  }
   if (response.status === 204) return null;
   if (!response.headers.get('content-type')?.includes('application/json')) throw new StaffAuthError(0, 'unavailable');
   try { return await response.json() as unknown; } catch { throw new StaffAuthError(0, 'unavailable'); }
 }
+const request = staffRequest;
 function data(value: unknown): unknown { return z.object({ data: z.unknown() }).parse(value).data; }
 export async function loadStaffSession(): Promise<StaffBootstrap> {
   const result = bootstrapSchema.safeParse(data(await request('/api/v1/admin/console/bootstrap')));

@@ -55,7 +55,7 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
     <div className="topbar-actions">
       {canOpenRoute(session?.permissions ?? [], '/sos') && <NavLink to="/sos" className="button danger topbar-sos">{session?.open_sos_count === null ? t('sos') : t('openSos', { count: session?.open_sos_count })}</NavLink>}
       <button className="language" aria-label={i18n.language === 'en' ? 'EN · Switch to Swahili' : 'SW · Badili kwenda Kiingereza'} onClick={() => void i18n.changeLanguage(i18n.language === 'en' ? 'sw' : 'en')}>{i18n.language === 'en' ? 'EN' : 'SW'}</button>
-      <NavLink to="/account/security" className="role-chip" aria-label={t('changePassword')}><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
+      <NavLink to="/account/security" className="role-chip"><strong>{session?.role}</strong><small>{t('changePassword')}</small></NavLink>
     </div>
   </header>;
 }
@@ -64,12 +64,12 @@ export function PageHeader({ title, description, children, tabs, selectedTab, on
   return <div className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{tabs && <div className="filter-tabs">{tabs.map(tab => <button key={tab.id} type="button" aria-pressed={selectedTab === tab.id} onClick={() => onTabChange?.(tab.id)}>{tab.label}</button>)}</div>}{children}</div>;
 }
 
-export function AppShell({ children, title, description }: { children: ReactNode; title: string; description: string }) {
+export function AppShell({ children, title, description, hideHeader = false }: { children: ReactNode; title: string; description: string; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   return <div className="app-shell"><a className="skip-link" href="#main">{t('skip')}</a>
     <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)}/><TopBar onMenu={() => setMenuOpen(!menuOpen)}/>
-    <main id="main" tabIndex={-1}><PageHeader title={title} description={description}/><div className="page-body" data-testid="playground-body">{children}</div></main>
+    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} description={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
     <DemoBanner appEnv={import.meta.env.VITE_APP_ENV || 'staging'} demoMode={import.meta.env.VITE_DEMO_MODE !== 'false'}/>
   </div>;
 }
