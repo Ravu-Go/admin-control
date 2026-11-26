@@ -13,7 +13,7 @@ import { navigation } from './navigation';
 
 export function safeReturnPath(value: unknown): string {
   const paths: string[] = navigation.flatMap(group => group.items.map(item => item[1]));
-  return typeof value === 'string' && [...paths, '/administration/access', '/playground/states', '/account/security', '/playground/reauthentication'].includes(value) ? value : '/';
+  return typeof value === 'string' && [...paths, '/administration/access', '/administration/settings', '/playground/states', '/account/security', '/playground/reauthentication'].includes(value) ? value : '/';
 }
 function message(error: unknown) {
   if (error instanceof StaffAuthError) {

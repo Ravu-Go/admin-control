@@ -2342,10 +2342,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * select company logo
+         * upload company logo
          * @description Attach an already validated private evidence upload. Do not accept executable SVG/HTML or arbitrary remote fetch URLs.
          */
-        post: operations["select_company_logo"];
+        post: operations["upload_company_logo"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4016,51 +4016,53 @@ export interface components {
             copy: components["schemas"]["BilingualCopy"] | null;
             value: components["schemas"]["ConfigValue"];
         };
+        /** @description Public display profile, also served unauthenticated at GET /api/v1/company-profile for apps and the website. */
         CompanyProfile: {
-            id: string;
+            name: string;
+            logo_url: string | null;
+            office_location: {
+                address: string;
+                latitude: number | null;
+                longitude: number | null;
+            } | null;
+            support_email: string | null;
+            support_phone: string | null;
             /**
              * Format: int64
-             * @description Version 0 represents initial company-profile setup; the first confirmed write advances to version 1.
+             * @description Version 0 is the unconfigured default profile; each confirmed change advances it by one.
              */
             version: number;
-            /** Format: date-time */
-            created_at: string;
-            /** Format: date-time */
-            updated_at: string;
-            created_by: string | null;
-            updated_by: string | null;
-            name: string;
-            /** Format: email */
-            support_email: string;
-            support_phone: string;
-            address: string;
-            logo_evidence_id: string | null;
+            updated_at: string | null;
         };
+        /** @description Replaces every editable field. Changing the address clears stored coordinates. */
         CompanyEdit: {
             /**
              * Format: int64
-             * @description Version 0 represents initial company-profile setup; the first confirmed write advances to version 1.
+             * @description Version 0 is the unconfigured default profile; each confirmed change advances it by one.
              */
             version: number;
             /** @enum {boolean} */
             confirmed: true;
             reason: string;
             name: string;
-            /** Format: email */
-            support_email: string;
-            support_phone: string;
-            address: string;
+            address: string | null;
+            support_email: string | null;
+            support_phone: string | null;
         };
-        LogoSelect: {
+        CompanyLogoUpload: {
             /**
              * Format: int64
-             * @description Version 0 represents initial company-profile setup; the first confirmed write advances to version 1.
+             * @description Version 0 is the unconfigured default profile; each confirmed change advances it by one.
              */
             version: number;
             /** @enum {boolean} */
             confirmed: true;
             reason: string;
-            evidence_id: string;
+            /**
+             * Format: binary
+             * @description JPEG, PNG or WebP, at most 2 MiB and 4096 x 4096 pixels. SVG is not accepted.
+             */
+            file: string;
         };
         /** @description No credentials, PINs or secrets in the response; configured does not imply healthy. */
         Integration: {
@@ -4668,7 +4670,7 @@ export interface components {
             data: components["schemas"]["CompanyProfile"];
             meta: components["schemas"]["Meta"];
         };
-        select_company_logoResponse: {
+        upload_company_logoResponse: {
             data: components["schemas"]["CompanyProfile"];
             meta: components["schemas"]["Meta"];
         };
@@ -10278,7 +10280,7 @@ export interface operations {
             503: components["responses"]["Error503"];
         };
     };
-    select_company_logo: {
+    upload_company_logo: {
         parameters: {
             query?: never;
             header: {
@@ -10291,7 +10293,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LogoSelect"];
+                "multipart/form-data": components["schemas"]["CompanyLogoUpload"];
             };
         };
         responses: {
@@ -10301,7 +10303,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["select_company_logoResponse"];
+                    "application/json": components["schemas"]["upload_company_logoResponse"];
                 };
             };
             401: components["responses"]["Error401"];

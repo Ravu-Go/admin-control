@@ -24,7 +24,7 @@ const bootstrapSchema: z.ZodType<StaffBootstrap> = z.object({
 const stateSchema: z.ZodType<StaffAuthState> = z.object({
   state: z.enum(['mfa_required','enrollment_required','password_change_required','authenticated','logged_out']), staff_id: z.string().nullable(), absolute_expires_at: z.iso.datetime({ offset: true }).nullable(),
 });
-function origin() {
+export function origin() {
   const url = new URL(import.meta.env.VITE_API_BASE_URL || 'https://staging-api.ravultd.com');
   if (url.protocol !== 'https:' && !['localhost','127.0.0.1'].includes(url.hostname)) throw new StaffAuthError(0, 'unavailable');
   return url.origin;
@@ -33,27 +33,28 @@ function csrfToken() {
   try { return decodeURIComponent(document.cookie.split('; ').find(cookie => cookie.startsWith('XSRF-TOKEN='))?.slice(11) || ''); }
   catch { return ''; }
 }
-export async function staffRequest(path: string, body?: object, signal?: AbortSignal, csrfRefreshed = false, idempotencyKey?: string): Promise<unknown> {
+export async function staffRequest(path: string, body?: object | FormData, signal?: AbortSignal, csrfRefreshed = false, idempotencyKey?: string, method: 'POST' | 'PATCH' = 'POST'): Promise<unknown> {
   if (body && signal?.aborted) throw new StaffAuthError(0, 'unavailable');
   const token = body ? csrfToken() : '';
   if (body && !token) {
     if (csrfRefreshed) throw new StaffAuthError(419, 'csrf_expired');
     await staffRequest('/sanctum/csrf-cookie', undefined, signal);
-    return staffRequest(path, body, signal, true, idempotencyKey);
+    return staffRequest(path, body, signal, true, idempotencyKey, method);
   }
   let response: Response;
   try {
     response = await fetch(new URL(path, origin()), {
-      method: body ? 'POST' : 'GET', credentials: 'include', redirect: 'error', cache: 'no-store',
-      headers: { Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token } : {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
+      method: body ? method : 'GET', credentials: 'include', redirect: 'error', cache: 'no-store',
+      // A FormData body sets its own multipart boundary, so it must not carry a JSON content type.
+      headers: { Accept: 'application/json', ...(body ? { ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }), 'X-XSRF-TOKEN': token } : {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
+      ...(body ? { body: body instanceof FormData ? body : JSON.stringify(body) } : {}), signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
     });
   } catch { throw new StaffAuthError(0, 'unavailable'); }
   // Laravel rejects 419 before the controller runs. Refresh once, reread the
   // cookie, then retry that rejected POST; never replay a 401, 429 or timeout.
   if (response.status === 419 && body && !csrfRefreshed) {
     await staffRequest('/sanctum/csrf-cookie', undefined, signal);
-    return staffRequest(path, body, signal, true, idempotencyKey);
+    return staffRequest(path, body, signal, true, idempotencyKey, method);
   }
   if (!response.ok) {
     let code = response.status === 401 ? 'unauthenticated' : 'request_failed';
