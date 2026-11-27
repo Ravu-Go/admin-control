@@ -1,0 +1,5 @@
+.admin-sections { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 20px; }
+.admin-sections a { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 999px; color: var(--color-mutedAccessible); font-size: 13px; font-weight: 600; text-decoration: none; }
+.admin-sections a:hover { color: var(--color-ink); background: var(--color-white); }
+.admin-sections a[aria-current=page] { color: var(--color-ink); background: var(--color-white); box-shadow: inset 0 0 0 1px var(--color-line); }
+.admin-sections a:focus-visible { outline: 3px solid var(--color-blue); outline-offset: 3px; border-radius: var(--radius-badge); }

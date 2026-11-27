@@ -1,8 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render as renderDom, screen } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../../app/i18n';
 import { StaffAccessPage } from './StaffAccessPage';
+
+// Tabs keep their selection in the URL, so the page needs a router.
+const render = (element: ReactElement) => renderDom(<MemoryRouter>{element}</MemoryRouter>);
 const now = '2026-11-26T10:00:00Z';
 const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
 const roles = [{ ...metadata, id: 'demo-role', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'demo-role', enabled: true, protected: false, defaults: false, permissions: ['accounts.read' as const] }];
@@ -13,7 +18,7 @@ describe('staff administration interface', () => {
     render(<StaffAccessPage {...props}/>);
     expect(screen.getByText('Granted')).toBeInTheDocument();
     expect(screen.getAllByText('No access')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Invite staff' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Invite staff…' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Create role' })).toBeDisabled();
   });
   it('shows masked staff information and filters the current dataset', async () => {
@@ -29,7 +34,7 @@ describe('staff administration interface', () => {
     const user = userEvent.setup();
     const onRequestChange = vi.fn().mockResolvedValue(undefined);
     render(<StaffAccessPage {...props} onRequestChange={onRequestChange}/>);
-    await user.click(screen.getByRole('button', { name: 'Invite staff' }));
+    await user.click(screen.getByRole('button', { name: 'Invite staff…' }));
     await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Fictional new staff');
     await user.type(screen.getByRole('textbox', { name: 'Email' }), 'new@example.test');
     await user.selectOptions(screen.getByRole('combobox', { name: 'Role' }), 'demo-role');

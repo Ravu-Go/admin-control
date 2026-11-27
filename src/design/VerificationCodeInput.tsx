@@ -15,7 +15,7 @@ export const VerificationCodeInput = forwardRef<HTMLInputElement, Props>(functio
       <div className="verification-code-slots" aria-hidden="true">
         {Array.from({ length: 6 }, (_, index) => <span key={index} className={focused && index === Math.min(value.length, 5) ? 'is-current' : ''}>{value[index] || ''}</span>)}
       </div>
-      <input {...props} ref={ref} id={inputId} type="text" inputMode="numeric" autoComplete="one-time-code" autoCapitalize="none" spellCheck={false}
+      <input {...props} ref={ref} id={inputId} type="text" inputMode="numeric" autoComplete={props.autoComplete ?? "one-time-code"} autoCapitalize="none" spellCheck={false}
         value={value} maxLength={32} aria-invalid={!!error} aria-describedby={[props['aria-describedby'], error ? inputId + '-error' : undefined].filter(Boolean).join(' ') || undefined}
         onChange={event => onChange(event.target.value.replace(/\D/g, '').slice(0, 6))}
         onFocus={event => { setFocused(true); props.onFocus?.(event); }}

@@ -45,7 +45,7 @@ for (const kind of ['rider', 'driver', 'partner']) {
     const state = await mockStaffManagement(page, { superAdmin: true });
     await page.goto('/administration');
     await page.getByRole('tab', { name: 'Users', exact: true }).click();
-    await page.getByRole('button', { name: 'Create user', exact: true }).click();
+    await page.getByRole('button', { name: 'Create user…', exact: true }).click();
     const editor = page.locator('dialog.access-editor');
     await editor.getByLabel('Name', { exact: true }).fill('Fictional member');
     await editor.getByLabel('Email', { exact: true }).fill('member@example.test');
@@ -81,13 +81,13 @@ test('owner Users page and form remain accessible in both languages and on mobil
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await page.getByRole('button', { name: 'Create user', exact: true }).click();
+    await page.getByRole('button', { name: 'Create user…', exact: true }).click();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.locator('dialog.access-editor').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   }
   await page.getByRole('button', { name: /Switch to Swahili/ }).click();
-  await expect(page.getByRole('button', { name: 'Unda mtumiaji', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Unda mtumiaji…', exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 

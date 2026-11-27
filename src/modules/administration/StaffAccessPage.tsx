@@ -5,6 +5,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { components } from '../../api/generated/admin';
 import { Button, ConfirmDialog, Panel, StatusBadge, type ConfirmedCommand } from '../../design/components';
 import { Icon } from '../../design/Icon';
+import { PageHeader } from '../../design/PageHeader';
+import { Tabs, TabPanel, useQueryChoice } from '../../design/Tabs';
 import { DialogHeader } from '../../design/DialogHeader';
 import './StaffAccessPage.css';
 
@@ -19,17 +21,20 @@ export type AccessFormCommand =
 type Props = {
   staff: Staff[]; roles: Role[]; permissions: readonly Permission[];
   capabilities: readonly Permission[]; areas: { id: string; label: string }[];
-  loading?: boolean; error?: string | undefined; requests?: ReactNode; sessions?: ReactNode; users?: ReactNode; isSuperAdmin?: boolean;
+  loading?: boolean; error?: string | undefined; requests?: ReactNode; pendingRequests?: number | undefined; sessions?: ReactNode; users?: ReactNode; isSuperAdmin?: boolean;
   onReload: () => void;
   totalStaff?: number | undefined; onSearch?: (value: string) => void; pagination?: ReactNode; previousTimestamp?: string | null; staffFilters?: ReactNode;
   /** Adapter must reauthenticate and submit an audited command using the current authority mode. */
   onRequestChange?: (values: AccessFormCommand, confirmation: ConfirmedCommand) => Promise<void>;
 };
 type Editor = { kind: 'invite' | 'staff' | 'role'; staff?: Staff; role?: Role };
+const accessTabs = ['roles', 'staff', 'users', 'requests', 'sessions'] as const;
+type AccessTab = typeof accessTabs[number];
 export function StaffAccessPage(props: Props) {
   const tr = useAccessText();
-  const [tab, setTab] = useState('roles');
-  const tabLabels: Record<string, string> = { roles: tr('Roles'), staff: tr('Staff'), users: tr('Users'), requests: tr('Access requests'), sessions: tr('Sessions') };
+  const tabLabels: Record<AccessTab, string> = { roles: tr('Roles'), staff: tr('Staff'), users: tr('Users'), requests: tr('Access requests'), sessions: tr('Sessions') };
+  const tabIds = accessTabs.filter(id => id !== 'users' || props.isSuperAdmin);
+  const [tab, setTab] = useQueryChoice<AccessTab>('tab', tabIds, 'roles');
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<Editor | null>(null);
   const [notice, setNotice] = useState('');
@@ -46,14 +51,13 @@ export function StaffAccessPage(props: Props) {
     { id: 'action', header: tr('Action'), cell: ({ row }) => <Button kind="secondary" disabled={!manage || row.original.role_ids.some(id => props.roles.find(role => role.id === id)?.protected)} onClick={() => showEditor({ kind: 'staff', staff: row.original })}>{tr('Manage user')}</Button> },
   ];
   return <div className="staff-access" data-testid="staff-access-page">
-    <div className="access-intro"><h1>{tr("Staff roles & permissions")}</h1><p>{tr("Least privilege · Named staff only")}</p></div>
+    <PageHeader title={tr("Staff roles and permissions")} subtitle={tr("Least privilege · Named staff only")}
+      action={allowed ? <Button icon="user-plus" disabled={!manage} onClick={() => showEditor({ kind: 'invite' })}>{tr(props.isSuperAdmin ? 'Add admin or staff…' : 'Invite staff…')}</Button> : undefined}
+      tabs={allowed ? <Tabs idPrefix="access" label={tr("Staff administration")} value={tab} onChange={id => setTab(id as AccessTab)} items={tabIds.map(id => ({ id, label: tabLabels[id], count: id === 'requests' ? props.pendingRequests : undefined }))}/> : undefined}/>
     {!allowed ? <Panel title={tr("Access unavailable")}><p>{tr("You need permission to view staff administration.")}</p><Button kind="secondary" onClick={props.onReload}>{tr("Reload permissions")}</Button></Panel> : <>
-      <div className="access-toolbar"><div className="access-tabs" role="tablist" aria-label={tr("Staff administration")}>
-        {Object.keys(tabLabels).filter(key => key !== 'users' || props.isSuperAdmin).map((key, index, tabs) => <button key={key} id={`access-tab-${key}`} role="tab" type="button" tabIndex={tab === key ? 0 : -1} aria-selected={tab === key} aria-controls="access-panel" onKeyDown={event => { const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0; if (!direction && !['Home', 'End'].includes(event.key)) return; event.preventDefault(); const target = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + direction + tabs.length) % tabs.length; setTab(tabs[target] ?? key); event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[target]?.focus(); }} onClick={() => setTab(key)}>{tabLabels[key]}</button>)}
-      </div><Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'invite' })}>{tr(props.isSuperAdmin ? 'Add admin or staff' : 'Invite staff')}</Button></div>
       {notice && <p role="status" className="access-notice">{notice}</p>}
       {props.error ? <Panel title={tr("Staff administration unavailable")}><p role="alert">{props.error}</p><Button kind="secondary" onClick={props.onReload}>{tr("Try again")}</Button></Panel> : props.loading ? <Panel title={tr("Loading staff administration")}><p role="status">{tr("Retrieving current permissions and records…")}</p></Panel> :
-      <section role="tabpanel" id="access-panel" aria-labelledby={`access-tab-${tab}`}>
+      <TabPanel idPrefix="access" id={tab}>
         {tab === 'roles' && <Panel title={tr("Role capability matrix")}><div className="access-panel-tools"><p>{tr(props.isSuperAdmin ? "Role changes apply immediately. Reassign affected staff." : "Role changes need independent approval. Reassign affected staff.")}</p><Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'role' })}>{tr("Create role")}</Button></div>
           {props.roles.length === 0 ? <p>{tr("No roles are available.")}</p> : <div className="access-table-scroll"><table className="access-matrix"><thead><tr><th scope="col">{tr("Capability")}</th>{props.roles.map(role => <th key={role.id} scope="col"><strong>{role.name}</strong><small>{role.enabled ? tr('Enabled') : tr('Disabled')}</small><Button kind="secondary" disabled={!manage || role.protected} onClick={() => showEditor({ kind: 'role', role })}>{tr("Manage role")}</Button></th>)}</tr></thead><tbody>{props.capabilities.map(capability => <tr key={capability}><th scope="row">{capability}</th>{props.roles.map(role => <td key={role.id}>{role.permissions.includes(capability) ? tr('Granted') : tr('No access')}</td>)}</tr>)}</tbody></table></div>}
         </Panel>}
@@ -64,7 +68,7 @@ export function StaffAccessPage(props: Props) {
         {tab === 'users' && props.users}
         {tab === 'requests' && (props.requests ?? <Panel title={tr("Access requests")}><p>{tr("Approval data is not connected yet. No access changes have been made.")}</p></Panel>)}
         {tab === 'sessions' && (props.sessions ?? <Panel title={tr("Staff sessions")}><p>{tr("Session management is not connected yet.")}</p></Panel>)}
-      </section>}
+      </TabPanel>}
       <div className="access-security-note"><Icon name="shield"/><div><strong>{tr("No shared super-admin credentials")}</strong><p>{tr(props.isSuperAdmin ? 'MFA, confirmation and an audit reason are required.' : 'MFA and a second administrator’s approval are required.')}</p></div></div>
     </>}
     {editor && manage && <AccessEditor key={editor.staff?.id ?? editor.role?.id ?? editor.kind} editor={editor} direct={!!props.isSuperAdmin} roles={props.roles} capabilities={props.capabilities} areas={props.areas} onClose={() => setEditor(null)} onSubmit={async (values, confirmation) => { if (!props.onRequestChange) return; await props.onRequestChange(values, confirmation); setEditor(null); setNotice(tr(props.isSuperAdmin ? 'Change applied.' : 'Request submitted for independent review.')); }}/>} 

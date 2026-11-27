@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { sendPasswordCode, changeStaffPassword, StaffAuthError, type StaffPasswordChangeRequest } from '../api/staff-auth';
 import { VerificationCodeInput } from '../design/VerificationCodeInput';
+import { PasswordInput } from '../design/PasswordInput';
 
 /** Credentials live only in this form; requests are cancelled on departure. */
 export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void; onExpired?: () => void }) {
@@ -14,7 +15,6 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
   const [error, setError] = useState('');
   const [resending, setResending] = useState(false);
   const [now, setNow] = useState(Date.now);
-  const [visible, setVisible] = useState(false);
   const currentPassword = useRef<HTMLInputElement>(null);
   const codeInput = useRef<HTMLInputElement | null>(null);
   const request = useRef<AbortController | null>(null);
@@ -36,7 +36,7 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
   const expired = !!challenge && remaining === 0;
   const report = (failure: unknown, sending: boolean) => {
     if (failure instanceof StaffAuthError && [401,419].includes(failure.status)) {
-      form.reset(); setVisible(false); setError('loginExpired'); onExpired?.();
+      form.reset(); setError('loginExpired'); onExpired?.();
     } else setError(failure instanceof StaffAuthError && failure.status === 429 ? 'loginRateLimited' : failure instanceof StaffAuthError && failure.status === 422 ? sending ? 'currentPasswordInvalid' : 'passwordVerificationFailed' : 'passwordChangeUnavailable');
   };
   const send = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,14 +51,14 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
       if (!mounted.current || controller.signal.aborted) return;
       const receivedAt = Date.now();
       setNow(receivedAt); setChallenge({ expiresAt: receivedAt + timing.expires_in * 1000, retryAt: receivedAt + timing.resend_after * 1000 });
-      setResending(false); setVisible(false); form.reset();
+      setResending(false); form.reset();
     } catch (failure) { if (mounted.current && !controller.signal.aborted) report(failure, true); }
     finally { if (request.current === controller) request.current = null; if (mounted.current) setBusy(false); }
   };
   const submit = async (values: StaffPasswordChangeRequest) => {
     if (request.current || !challenge || Date.now() >= challenge.expiresAt) return;
     const controller = new AbortController(); request.current = controller;
-    setBusy(true); setError(''); setVisible(false); form.reset();
+    setBusy(true); setError(''); form.reset();
     try { await changeStaffPassword(values, controller.signal); if (mounted.current && !controller.signal.aborted) onChanged(); }
     catch (failure) { if (mounted.current && !controller.signal.aborted) { report(failure, false); codeInput.current?.focus(); } }
     finally { if (request.current === controller) request.current = null; if (mounted.current) setBusy(false); }
@@ -71,7 +71,7 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
     <div className="password-verification-card">
       <div className="verification-heading"><span className="verification-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span><div><h2>{t(challenge ? 'checkYourEmail' : 'securePasswordTitle')}</h2><p>{t(challenge ? 'emailCodeHelp' : 'passwordCodeHelp')}</p></div></div>
       {!challenge && <form onSubmit={event => void send(event)} aria-busy={busy}>
-        <label htmlFor="change-current">{t('currentPassword')}</label><input ref={currentPassword} id="change-current" name="current_password" type="password" autoComplete="current-password" required maxLength={512} disabled={busy}/>
+        <label htmlFor="change-current">{t('currentPassword')}</label><PasswordInput ref={currentPassword} id="change-current" name="current_password" autoComplete="current-password" required maxLength={512} disabled={busy}/>
         <button type="submit" className="button primary verification-submit" disabled={busy}>{t(busy ? 'sendingCode' : 'sendCode')}</button>
       </form>}
       {challenge && <>
@@ -79,10 +79,10 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
         <form noValidate onSubmit={event => void form.handleSubmit(submit)(event)} aria-busy={busy}>
           <Controller control={form.control} name="code" render={({ field, fieldState }) => <VerificationCodeInput {...field} ref={element => { field.ref(element); codeInput.current = element; }} id="password-email-code" label={t('emailVerificationCode')} error={fieldState.error?.message} disabled={busy || expired} aria-describedby="email-code-expiry"/>}/>
           <p id="email-code-expiry" className={expired ? 'field-error' : 'verification-expiry'} role="timer" aria-live="off">{expired ? t('emailCodeExpired') : t('emailCodeExpires', { time: String(Math.floor(remaining / 60)).padStart(2, '0') + ':' + String(remaining % 60).padStart(2, '0') })}</p>
-          <label htmlFor="change-new">{t('newPassword')}</label><div className="password-field"><input id="change-new" type={visible ? 'text' : 'password'} autoComplete="new-password" maxLength={128} {...form.register('password')} disabled={busy || expired} aria-invalid={!!form.formState.errors.password} aria-describedby="password-policy"/><button type="button" aria-label={t(visible ? 'hidePassword' : 'showPassword')} aria-pressed={visible} disabled={busy} onClick={() => setVisible(!visible)}>{t(visible ? 'hide' : 'show')}</button></div>
+          <label htmlFor="change-new">{t('newPassword')}</label><PasswordInput id="change-new" autoComplete="new-password" maxLength={128} {...form.register('password')} disabled={busy || expired} aria-invalid={!!form.formState.errors.password} aria-describedby="password-policy"/>
           <p id="password-policy" className="password-policy">{t('newPasswordPolicy')}</p>
           {form.formState.errors.password && <p className="field-error" role="alert">{form.formState.errors.password.message}</p>}
-          <label htmlFor="change-confirm">{t('confirmPassword')}</label><input id="change-confirm" type="password" autoComplete="new-password" maxLength={128} {...form.register('password_confirmation')} disabled={busy || expired} aria-invalid={!!form.formState.errors.password_confirmation} aria-describedby={form.formState.errors.password_confirmation ? 'confirm-password-error' : undefined}/>
+          <label htmlFor="change-confirm">{t('confirmPassword')}</label><PasswordInput id="change-confirm" autoComplete="new-password" maxLength={128} {...form.register('password_confirmation')} disabled={busy || expired} aria-invalid={!!form.formState.errors.password_confirmation} aria-describedby={form.formState.errors.password_confirmation ? 'confirm-password-error' : undefined}/>
           {form.formState.errors.password_confirmation && <p id="confirm-password-error" className="field-error" role="alert">{form.formState.errors.password_confirmation.message}</p>}
           <button type="submit" className="button primary verification-submit" disabled={busy || expired}>{t(busy ? 'verifying' : 'confirmPasswordChange')}</button>
         </form>
@@ -90,7 +90,7 @@ export function PasswordChange({ onChanged, onExpired }: { onChanged: () => void
           <p>{t('noEmailCode')}</p>
           {!resending && <button type="button" className="verification-resend-button" disabled={busy || cooldown > 0} onClick={() => { setResending(true); setError(''); }}>{cooldown > 0 ? t('resendCountdown', { count: cooldown }) : t('resendCode')}</button>}
           {resending && <form onSubmit={event => void send(event)} aria-busy={busy}>
-            <label htmlFor="resend-current">{t('currentPassword')}</label><input ref={currentPassword} id="resend-current" name="current_password" type="password" autoComplete="current-password" required maxLength={512} disabled={busy}/>
+            <label htmlFor="resend-current">{t('currentPassword')}</label><PasswordInput ref={currentPassword} id="resend-current" name="current_password" autoComplete="current-password" required maxLength={512} disabled={busy}/>
             <div className="verification-resend-actions"><button type="submit" className="button secondary" disabled={busy || cooldown > 0}>{t(busy ? 'sendingCode' : 'resendCode')}</button><button type="button" className="button secondary" disabled={busy} onClick={() => { if (currentPassword.current) currentPassword.current.value = ''; setResending(false); setError(''); }}>{t('cancel')}</button></div>
           </form>}
         </div>

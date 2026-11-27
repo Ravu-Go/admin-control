@@ -1,11 +1,13 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import type { StaffStepUpRequest } from '../api/staff-auth';
 import { StaffAuthError } from '../api/staff-auth';
 import { Button } from './components';
+import { PasswordInput } from './PasswordInput';
+import { VerificationCodeInput } from './VerificationCodeInput';
 
 export type VerificationCredentials = Pick<StaffStepUpRequest, 'password' | 'code'>;
 
@@ -65,12 +67,11 @@ export function IdentityVerificationDialog<T>({ contextKey, canVerify, deadline,
   return <dialog ref={dialog} className="confirm-dialog identity-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} onCancel={event => { event.preventDefault(); cancel(); }}>
     <form noValidate onSubmit={event => void form.handleSubmit(submit, () => { form.resetField('password', { keepError: true }); form.resetField('code', { keepError: true }); })(event)}>
       <h2 id={`${id}-title`}>{t(preview ? 'reauthPreview' : 'reauthTitle')}</h2>
-      <p id={`${id}-description`}>{t(preview ? 'reauthPreviewCopy' : 'reauthDescription', { action: actionLabel })}</p>
+      <p className="identity-action">{actionLabel}</p><p id={`${id}-description`}>{t(preview ? 'reauthPreviewCopy' : 'reauthDescription')}</p>
       {blocked && <p role="alert">{t(!canVerify ? 'permissionDenied' : expired ? 'loginExpired' : 'stale')}</p>}
-      <label htmlFor={`${id}-password`}>{t(preview ? 'examplePassword' : 'currentPassword')}</label><input id={`${id}-password`} type="password" autoComplete={preview ? 'off' : 'current-password'} maxLength={512} {...form.register('password')} aria-invalid={!!form.formState.errors.password} aria-describedby={form.formState.errors.password ? `${id}-password-error` : undefined}/>
-      {form.formState.errors.password && <p id={`${id}-password-error`} role="alert">{form.formState.errors.password.message}</p>}
-      <label htmlFor={`${id}-code`}>{t(preview ? 'exampleCode' : 'verificationCode')}</label><input id={`${id}-code`} inputMode="numeric" autoComplete={preview ? 'off' : 'one-time-code'} maxLength={6} {...form.register('code')} aria-invalid={!!form.formState.errors.code} aria-describedby={form.formState.errors.code ? `${id}-code-error` : undefined}/>
-      {form.formState.errors.code && <p id={`${id}-code-error`} role="alert">{form.formState.errors.code.message}</p>}
+      <label htmlFor={`${id}-password`}>{t(preview ? 'examplePassword' : 'currentPassword')}</label><PasswordInput id={`${id}-password`} autoComplete={preview ? 'off' : 'current-password'} maxLength={512} {...form.register('password')} aria-invalid={!!form.formState.errors.password} aria-describedby={form.formState.errors.password ? `${id}-password-error` : undefined}/>
+      {form.formState.errors.password && <p id={`${id}-password-error`} className="field-error" role="alert">{form.formState.errors.password.message}</p>}
+      <Controller control={form.control} name="code" render={({ field, fieldState }) => <VerificationCodeInput {...field} id={`${id}-code`} label={t(preview ? 'exampleCode' : 'verificationCode')} error={fieldState.error?.message} {...(preview ? { autoComplete: 'off' } : {})}/>}/>
       {error && !blocked && <p role="alert">{t(error)}</p>}
       <div className="dialog-actions"><Button kind="secondary" onClick={cancel}>{t('cancel')}</Button><Button type="submit" disabled={blocked || busy || form.formState.isSubmitting}>{t(busy || form.formState.isSubmitting ? 'verifying' : 'verifyAndContinue')}</Button></div>
     </form>

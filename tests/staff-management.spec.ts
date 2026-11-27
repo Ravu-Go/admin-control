@@ -52,7 +52,7 @@ test('self-approval is disabled and denied scope exposes no staff records', asyn
 test('administration is accessible in English and Swahili and on a small screen', async ({ page }) => {
   await mockStaffManagement(page);
   await page.goto('/administration');
-  await expect(page.getByRole('heading', { name: 'Staff roles & permissions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole('button', { name: /Switch to Swahili/ }).click();
   await expect(page.getByRole('heading', { name: 'Majukumu na ruhusa za watumishi' })).toBeVisible();
@@ -119,5 +119,5 @@ test('staff forms open as closable popups over the page', async ({ page }) => {
   expect(backdrop).not.toMatch(/^rgb\(/); // translucent, so the page stays visible behind the popup
   await editor.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(editor).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Staff roles & permissions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
 });

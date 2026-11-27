@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
 const sw: Record<string, string> = {
-  "Staff roles & permissions": "Majukumu na ruhusa za watumishi",
+  "Staff roles and permissions": "Majukumu na ruhusa za watumishi",
+  "Invite staff…": "Alika mtumishi…",
+  "Add admin or staff…": "Ongeza msimamizi au mtumishi…",
   "Access unavailable": "Ufikiaji haupatikani",
   "You need permission to view staff administration.": "Unahitaji ruhusa kuona usimamizi wa watumishi.",
   "Reload permissions": "Pakia ruhusa upya",
@@ -9,7 +11,6 @@ const sw: Record<string, string> = {
   "Staff": "Watumishi",
   "Access requests": "Maombi ya ufikiaji",
   "Sessions": "Vipindi",
-  "Invite staff": "Alika mtumishi…",
   "Staff administration unavailable": "Usimamizi wa watumishi haupatikani",
   "Try again": "Jaribu tena",
   "Loading staff administration": "Inapakia usimamizi wa watumishi",
@@ -62,7 +63,6 @@ const sw: Record<string, string> = {
   "Explicit capabilities": "Ruhusa mahususi",
   "Cancel": "Ghairi",
   "Users": "Watumiaji",
-  "Add admin or staff": "Ongeza msimamizi au mtumishi",
   "Apply change": "Tekeleza mabadiliko",
   "Enable role": "Wezesha jukumu",
   "Least privilege · Named staff only": "Ruhusa zinazohitajika tu · Akaunti binafsi za watumishi",
