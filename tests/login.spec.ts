@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mockStaffApi } from './support/staff-api';
+import { mockAccounts } from './support/accounts-api';
 
 test('unauthenticated visitors land on the branded login page', async ({ page }) => {
   await mockStaffApi(page);
@@ -13,6 +14,7 @@ test('unauthenticated visitors land on the branded login page', async ({ page })
 });
 test('password and MFA must succeed before returning to the requested admin page', async ({ page }) => {
   const api = await mockStaffApi(page);
+  await mockAccounts(page, { existingSession: true });
   await page.goto('/accounts');
   await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel('Email address').fill('staff@example.test');
@@ -22,6 +24,7 @@ test('password and MFA must succeed before returning to the requested admin page
   await expect(page.locator('.sidebar')).toHaveCount(0);
   await page.getByLabel('Verification code').fill('123456');
   await expect(page).toHaveURL(/\/accounts$/);
+  await expect(page.getByRole('table')).toBeVisible();
   await expect(page.locator('.sidebar .ravu-logo')).toBeVisible();
   await expect(page.getByText('Demo workspace', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Admin · Demo', { exact: true })).toHaveCount(0);

@@ -1,0 +1,38 @@
+.accounts-screen { display: grid; gap: 24px; }
+.accounts-filters { display: flex; flex-wrap: wrap; gap: 16px; }
+.accounts-screen .muted { color: var(--color-mutedAccessible); font-size: 12px; }
+.account-review-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 24px; align-items: start; }
+.account-review-summary { display: grid; gap: 24px; }
+.account-facts { display: grid; grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr); gap: 24px; margin: 24px 0; }
+.account-facts dt { color: var(--color-mutedAccessible); font-weight: 700; }
+.account-facts dd { margin: 0; overflow-wrap: anywhere; }
+.account-facts ul { padding-left: 18px; margin-bottom: 0; }
+.account-warning { border: 2px solid var(--color-danger); border-radius: var(--radius-button); padding: 16px; margin: 24px 0; }
+.account-warning strong { color: var(--color-danger); }
+.account-warning p { margin-bottom: 0; }
+.account-status-form { display: grid; gap: 24px; }
+.account-status-form label { display: grid; gap: 8px; font-size: 14px; font-weight: 700; }
+.account-status-form textarea { min-height: 90px; resize: none; field-sizing: content; width: 100%; }
+.account-status-form input, .account-status-form textarea { border: 2px solid var(--color-line); border-radius: var(--radius-button); padding: 12px; color: var(--color-ink); background: var(--color-white); font: inherit; font-weight: 400; }
+.account-status-form [aria-invalid=true] { border-color: var(--color-danger); }
+.account-status-form [role=alert] { color: var(--color-danger); }
+@media (max-width: 900px) { .account-review-grid { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .account-facts { grid-template-columns: 1fr; gap: 8px; } .account-facts dd { margin-bottom: 16px; } }
+
+.accounts-screen { grid-template-columns: minmax(0, 1fr); }
+.accounts-screen > *, .account-review-summary, .account-review-grid > * { min-width: 0; }
+.account-status-form input { min-width: 0; width: 100%; }
+@media (max-width: 600px) { .accounts-screen .page-header-row { flex-direction: column; align-items: stretch; } }
+
+.page-body-accounts { margin-top: 0; }
+.accounts-screen > .page-header { margin-bottom: 0; }
+.accounts-filters { padding-top: 12px; }
+.account-directory { min-height: 568px; }
+.account-directory .data-table { margin-top: 20px; }
+.account-directory td { font-size: 14px; padding: 18px 10px; }
+.account-directory th { padding: 12px 10px; }
+.account-directory tbody tr:nth-child(even) { background: var(--color-light); }
+
+.account-review-notice { position: relative; min-height: 80px; padding: 14px 24px 14px 64px; }
+.account-review-notice > .icon { position: absolute; top: 26px; left: 24px; }
+.account-review-notice .panel-description { margin: 4px 0 0; }
