@@ -33,6 +33,3 @@
 .account-directory th { padding: 12px 10px; }
 .account-directory tbody tr:nth-child(even) { background: var(--color-light); }
 
-.account-review-notice { position: relative; min-height: 80px; padding: 14px 24px 14px 64px; }
-.account-review-notice > .icon { position: absolute; top: 26px; left: 24px; }
-.account-review-notice .panel-description { margin: 4px 0 0; }

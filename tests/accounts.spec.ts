@@ -106,5 +106,7 @@ test('loading and empty directory states never fabricate account rows or totals'
   await page.reload();
   await expect(page.getByRole('table')).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(0);
-  await expect(page.getByText('0 accounts · No bulk approval or suspension')).toBeVisible();
+  await expect(page.getByText('0 accounts', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'More information: Account directory' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'No bulk approval or suspension.' })).toBeVisible();
 });

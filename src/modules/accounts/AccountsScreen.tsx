@@ -10,7 +10,6 @@ import { changeAccountStatus, loadAccount, loadAccounts, type Account, type Acco
 import { StaffAuthError } from '../../api/staff-auth';
 import { useStaffSession } from '../../app/StaffSession';
 import { Button, Panel, StatusBadge, Timeline } from '../../design/components';
-import { Icon } from '../../design/Icon';
 import { DataTable } from '../../design/DataTable';
 import { PageHeader } from '../../design/PageHeader';
 import { LoadingState } from '../../design/States';
@@ -61,13 +60,15 @@ export function AccountsScreen() {
     <PageHeader title={text('Accounts', 'Akaunti')} subtitle={text('One directory for clients and drivers · Sensitive contact fields are masked by default', 'Orodha moja ya wateja na madereva · Mawasiliano nyeti yamefichwa kwa chaguomsingi')}
       action={<Button kind="secondary" disabled aria-describedby={!result.isPending && !result.isError ? 'account-export-help' : undefined}>{text('Export masked list', 'Hamisha orodha iliyofichwa')}</Button>}/>
     <div className="accounts-filters"><SegmentedFilter label={text('Account directory filter', 'Chujio cha akaunti')} value={view} onChange={value => { setView(value as typeof view); setPage(1); }} options={views.map(id => ({ id, label: ({ all: text('All accounts', 'Akaunti zote'), drivers: text('Drivers', 'Madereva'), clients: text('Clients', 'Wateja'), needs_review: text('Needs review', 'Zinahitaji ukaguzi') })[id] }))}/></div>
-    {result.isPending ? <LoadingState previousTimestamp={null}/> : result.isError ? <Failure error={result.error} retry={() => void result.refetch()}/> : <Panel className="account-directory" title={text('Account directory', 'Orodha ya akaunti')}>
+    {result.isPending ? <LoadingState previousTimestamp={null}/> : result.isError ? <Failure error={result.error} retry={() => void result.refetch()}/> : <Panel className="account-directory" title={text('Account directory', 'Orodha ya akaunti')} info={<>
+      <p>{text('Open the full account record, evidence and previous decisions before changing account access.', 'Fungua rekodi kamili, ushahidi na maamuzi yaliyotangulia kabla ya kubadili ufikiaji.')}</p>
+      <p>{text('No bulk approval or suspension.', 'Hakuna kuidhinisha au kusimamisha kwa pamoja.')}</p>
+      <p id="account-export-help">{text('Controlled exports are not connected yet. Contacts remain masked; no personal data is exported.', 'Uhamishaji unaodhibitiwa haujaunganishwa bado. Mawasiliano yamefichwa; hakuna taarifa binafsi zinazohamishwa.')}</p>
+    </>}>
       <DataTable rows={result.data.data} columns={columns} filterable={false} externalPagination loading={result.isFetching} previousTimestamp={null}/>
-      <p className="muted">{result.data.meta.pagination.total} {text('accounts · No bulk approval or suspension', 'akaunti · Hakuna kuidhinisha au kusimamisha kwa pamoja')}</p>
-      <p id="account-export-help" className="muted">{text('Controlled exports are not connected yet. Contacts remain masked; no personal data is exported.', 'Uhamishaji unaodhibitiwa haujaunganishwa bado. Mawasiliano yamefichwa; hakuna taarifa binafsi zinazohamishwa.')}</p>
+      <p className="muted">{result.data.meta.pagination.total} {text('accounts', 'akaunti')}</p>
       <Pager page={page} last={result.data.meta.pagination.last_page} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>
     </Panel>}
-    <Panel className="account-review-notice" title={text('Review without guessing', 'Kagua bila kubahatisha')} description={text('Open the full account record, evidence and previous decisions before changing account access.', 'Fungua rekodi kamili, ushahidi na maamuzi yaliyotangulia kabla ya kubadili ufikiaji.')}><Icon name="shield" size={22}/></Panel>
 
   </div>;
 }
@@ -94,13 +95,12 @@ export function AccountReviewScreen() {
     {notice && <p role="status">{notice}</p>}
     <TabPanel id={section} idPrefix="account-review">
       {section === 'overview' ? <div className="account-review-grid"><div className="account-review-summary">
-        <Panel title={text('Account and dispatch eligibility', 'Akaunti na ustahiki wa safari')} description={text('Keep account status, document status and membership distinct', 'Hali ya akaunti, nyaraka na uanachama ni tofauti')}>
+        <Panel title={text('Account and dispatch eligibility', 'Akaunti na ustahiki wa safari')} description={text('Keep account status, document status and membership distinct', 'Hali ya akaunti, nyaraka na uanachama ni tofauti')} info={<p>{text('Eligibility is calculated by the server. LATRA is required for bodas and bajajis, valid for one year and bound to the registered vehicle. Insurance is optional.', 'Ustahiki unakokotolewa na seva. LATRA ni lazima kwa boda na bajaji, hudumu mwaka mmoja na inahusishwa na gari lililosajiliwa. Bima ni ya hiari.')}</p>}>
           <dl className="account-facts"><dt>{text('Account', 'Akaunti')}</dt><dd><AccountState value={account.account_status}/></dd>
             <dt>{text('Required documents', 'Nyaraka zinazohitajika')}</dt><dd>{account.kind === 'driver' ? <AccountState value={account.verification_status}/> : text('Not applicable', 'Haihusiki')}</dd>
             <dt>{text('Membership', 'Uanachama')}</dt><dd>{account.membership_status ? <AccountState value={account.membership_status}/> : text('Not applicable', 'Haihusiki')}</dd>
             <dt>{text('Dispatch', 'Ugawaji wa safari')}</dt><dd>{account.kind !== 'driver' ? text('Not applicable', 'Haihusiki') : account.dispatch_eligibility.eligible ? text('Eligible now', 'Anastahiki sasa') : <><strong>{text('Paused', 'Imesitishwa')}</strong><ul>{account.dispatch_eligibility.blockers.map(reason => <li key={reason}>{blockerLabel(reason, text)}</li>)}</ul></>}</dd>
           </dl>
-          <p className="muted">{text('Eligibility is calculated by the server. LATRA is required for bodas and bajajis, valid for one year and bound to the registered vehicle. Insurance is optional.', 'Ustahiki unakokotolewa na seva. LATRA ni lazima kwa boda na bajaji, hudumu mwaka mmoja na inahusishwa na gari lililosajiliwa. Bima ni ya hiari.')}</p>
         </Panel>
         <Panel title={text('Review history', 'Historia ya ukaguzi')}>
           {account.history.length ? <Timeline items={account.history.map(event => ({ id: event.id, dateTime: event.created_at, title: new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Dar_es_Salaam', dateStyle: 'medium' }).format(new Date(event.created_at)) + ' · ' + text('Account access decision recorded', 'Uamuzi wa ufikiaji umerekodiwa'), detail: event.action === 'account.closed' ? text('Account closed; history retained.', 'Akaunti imefungwa; historia imehifadhiwa.') : text('Audited decision retained in the system.', 'Uamuzi uliokaguliwa umehifadhiwa kwenye mfumo.') }))}/> : <p>{text('No account access decisions recorded.', 'Hakuna maamuzi ya ufikiaji yaliyorekodiwa.')}</p>}
@@ -159,12 +159,11 @@ function StatusEditor({ account, canManage, onCancel, onSaved }: { account: Acco
       if (failure instanceof StaffAuthError && failure.status === 403) setBlocked(true);
     } finally { inFlight.current = false; }
   };
-  return <Panel title={suspended ? text('Reinstate account · confirmation', 'Rejesha akaunti · uthibitisho') : text('Suspend account · confirmation', 'Simamisha akaunti · uthibitisho')} description={text('Visible state for authorised administrators only', 'Kwa wasimamizi wenye ruhusa pekee')}>
+  return <Panel title={suspended ? text('Reinstate account · confirmation', 'Rejesha akaunti · uthibitisho') : text('Suspend account · confirmation', 'Simamisha akaunti · uthibitisho')} description={text('Visible state for authorised administrators only', 'Kwa wasimamizi wenye ruhusa pekee')} info={<p>{text('The member can contact support and appeal. Reasons are retained in the audit record. Message delivery is not connected yet.', 'Mwanachama anaweza kuwasiliana na msaada na kukata rufaa. Sababu zinahifadhiwa kwenye rekodi ya ukaguzi. Utumaji ujumbe haujaunganishwa bado.')}</p>}>
     <div className="account-warning"><strong>{suspended ? text('Eligibility checks still apply', 'Ukaguzi wa ustahiki bado unatumika') : text('Dispatch will pause', 'Ugawaji wa safari utasitishwa')}</strong><p>{text('History and documents are retained. Reinstatement is a separate action.', 'Historia na nyaraka zinahifadhiwa. Kurejesha ni hatua tofauti.')}</p></div>
     <form noValidate className="account-status-form" onSubmit={event => void handleSubmit(submit)(event)}>
       {(['en', 'sw'] as const).map(locale => <label key={locale} htmlFor={`member-reason-${locale}`}>{text('Member-facing reason', 'Sababu kwa mwanachama')} · {locale.toUpperCase()} · {text('required', 'lazima')}<textarea className="resize-none" id={`member-reason-${locale}`} {...register(locale)} aria-invalid={!!errors[locale]} aria-describedby={errors[locale] ? `error-${locale}` : undefined} disabled={isSubmitting}/>{errors[locale] && <span role="alert" id={`error-${locale}`}>{errors[locale]?.message}</span>}</label>)}
       <label htmlFor="account-evidence">{text('Internal evidence reference · optional', 'Rejea ya ushahidi wa ndani · hiari')}<input id="account-evidence" {...register('evidence')} aria-invalid={!!errors.evidence} aria-describedby={errors.evidence ? 'error-evidence' : undefined} disabled={isSubmitting}/>{errors.evidence && <span id="error-evidence" role="alert">{errors.evidence.message}</span>}</label>
-      <p className="muted">{text('The member can contact support and appeal. Reasons are retained in the audit record. Message delivery is not connected yet.', 'Mwanachama anaweza kuwasiliana na msaada na kukata rufaa. Sababu zinahifadhiwa kwenye rekodi ya ukaguzi. Utumaji ujumbe haujaunganishwa bado.')}</p>
       {error && <p role="alert">{error}</p>}
       {!checked && !blocked && <Button kind="secondary" type="button" disabled={isSubmitting} onClick={async () => {
         try {
