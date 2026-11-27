@@ -15,7 +15,7 @@ const permission = z.custom<Role['permissions'][number]>(value => typeof value =
 const staff: z.ZodType<Staff> = z.object({ ...metadata, display_name: z.string(), email_masked: z.string(), role_ids: z.array(z.string()), status: z.enum(['active', 'suspended']), mfa_enrolled: z.boolean() });
 const role: z.ZodType<Role> = z.object({ ...metadata, name: z.string(), name_sw: z.string(), key: z.string(), enabled: z.boolean(), protected: z.boolean(), defaults: z.boolean(), permissions: z.array(permission) });
 const scope = z.object({ kind: z.enum(['global', 'area']), area_id: z.number().int().positive().nullable() });
-const access: z.ZodType<AccessRequest> = z.object({ ...metadata, approval_mode: z.enum(['independent', 'super_admin']).default('independent'), kind: z.enum(['invite', 'staff', 'role']), subject_id: z.string().nullable(), subject_version: z.number().int().positive().nullable(), status: z.enum(['pending', 'approved', 'rejected']), requested_by: z.string(), approved_by: z.string().nullable(), request_hash: z.string().length(64), reason: z.string(), summary: z.object({ name: z.string(), email_masked: z.string().nullable(), role_id: z.string().nullable(), scope: scope.nullable(), status: z.string().nullable(), enabled: z.boolean().nullable(), permissions: z.array(permission).nullable() }) });
+const access: z.ZodType<AccessRequest> = z.object({ ...metadata, approval_mode: z.enum(['independent', 'super_admin']).default('independent'), kind: z.enum(['invite', 'staff', 'role', 'account_closure']), subject_id: z.string().nullable(), subject_version: z.number().int().positive().nullable(), status: z.enum(['pending', 'approved', 'rejected']), requested_by: z.string(), approved_by: z.string().nullable(), request_hash: z.string().length(64), reason: z.string(), summary: z.object({ name: z.string(), email_masked: z.string().nullable(), role_id: z.string().nullable(), scope: scope.nullable(), status: z.string().nullable(), enabled: z.boolean().nullable(), permissions: z.array(permission).nullable() }) });
 const session: z.ZodType<Session> = z.object({ ...metadata, staff_id: z.string(), last_activity_at: z.string(), expires_at: z.string(), revoked: z.boolean(), current: z.boolean() });
 const invitation: z.ZodType<Invitation> = z.object({ ...metadata, email_masked: z.string(), role_id: z.string().nullable(), status: z.enum(['pending', 'accepted', 'revoked', 'expired']), expires_at: z.string() });
 const base = '/api/v1/admin/console/';
@@ -43,6 +43,10 @@ export async function loadAreas(signal?: AbortSignal): Promise<Area[]> {
 }
 export async function submitChange(command: Command, idempotencyKey: string): Promise<void> {
   z.object({ data: access }).parse(await staffRequest(base + 'access-requests', command, undefined, false, idempotencyKey));
+}
+/** Managers ask to delete a rider, driver or partner; a super administrator must approve before the account closes. */
+export async function requestAccountClosure(user: { id: string; version: number }, reason: string, idempotencyKey: string): Promise<void> {
+  await submitChange({ kind: 'account_closure', subject_id: Number(user.id), subject_version: user.version, payload: {}, reason, confirmed: true }, idempotencyKey);
 }
 export async function reviewChange(record: AccessRequest, decision: 'approve' | 'reject', reason: string, idempotencyKey: string): Promise<void> {
   z.object({ data: access }).parse(await staffRequest(base + `access-requests/${encodeURIComponent(record.id)}/review`, { version: record.version, request_hash: record.request_hash, decision, reason, confirmed: true }, undefined, false, idempotencyKey));

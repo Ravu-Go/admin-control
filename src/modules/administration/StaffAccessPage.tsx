@@ -35,7 +35,7 @@ type AccessTab = typeof accessTabs[number];
 export function StaffAccessPage(props: Props) {
   const tr = useAccessText();
   const tabLabels: Record<AccessTab, string> = { roles: tr('Roles'), staff: tr('Staff'), users: tr('Users'), requests: tr('Access requests'), sessions: tr('Sessions') };
-  const tabIds = accessTabs.filter(id => id !== 'users' || props.isSuperAdmin);
+  const tabIds = accessTabs.filter(id => id !== 'users' || !!props.users);
   const [tab, setTab] = useQueryChoice<AccessTab>('tab', tabIds, 'roles');
   const [localQuery, setLocalQuery] = useState('');
   const [localStatus, setLocalStatus] = useState('');

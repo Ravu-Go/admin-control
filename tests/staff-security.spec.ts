@@ -15,7 +15,6 @@ test('authenticator enrollment verifies a code before opening the admin page', a
   await page.getByText('Can’t scan? Enter the key instead').click();
   await expect(page.locator('.enrollment-key')).toHaveText('JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP');
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
-  await page.getByRole('button', { name: 'Verify and continue' }).click();
   await expect(page.locator('.sidebar')).toBeVisible();
 });
 

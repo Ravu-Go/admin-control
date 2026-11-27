@@ -18,7 +18,6 @@ it.each([401, 419])('returns expired MFA HTTP %s to password sign-in without a r
   vi.mocked(verifyStaffMfa).mockRejectedValueOnce(new StaffAuthError(status, 'request_failed'));
   render(<MemoryRouter><LoginPage/></MemoryRouter>);await signIn();
   fireEvent.change(screen.getByLabelText('Verification code'), { target: { value: '123456' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Verify and continue' }));
   await screen.findByRole('heading', { name: 'Sign in to Ravu' });
   expect(screen.getByRole('alert')).toHaveTextContent('session expired');
   expect(screen.getByLabelText('Email address')).toHaveValue('staff@example.test');
@@ -30,7 +29,6 @@ it('keeps an incorrect authenticator code on the MFA screen', async () => {
   vi.mocked(verifyStaffMfa).mockRejectedValueOnce(new StaffAuthError(422, 'request_failed'));
   render(<MemoryRouter><LoginPage/></MemoryRouter>);await signIn();
   fireEvent.change(screen.getByLabelText('Verification code'), { target: { value: '000000' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Verify and continue' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('could not be verified');
   expect(screen.getByRole('heading', { name: 'Verify your sign-in' })).toBeVisible();
   expect(screen.getByLabelText('Verification code')).toHaveValue('');

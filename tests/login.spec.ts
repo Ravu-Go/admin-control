@@ -21,7 +21,6 @@ test('password and MFA must succeed before returning to the requested admin page
   await expect(page.getByRole('heading', { name: 'Verify your sign-in' })).toBeVisible();
   await expect(page.locator('.sidebar')).toHaveCount(0);
   await page.getByLabel('Verification code').fill('123456');
-  await page.getByRole('button', { name: 'Verify and continue' }).click();
   await expect(page).toHaveURL(/\/accounts$/);
   await expect(page.locator('.sidebar .ravu-logo')).toBeVisible();
   await expect(page.getByText('Demo workspace', { exact: true })).toHaveCount(0);

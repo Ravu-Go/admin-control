@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
-import { changeManagedUserStatus, createManagedUser, loadManagedUsers, type ManagedUserStatusCommand, type Area, type ManagedUser, type ManagedUserCreate } from '../../api/staff-admin';
+import { changeManagedUserStatus, createManagedUser, loadManagedUsers, requestAccountClosure, type ManagedUserStatusCommand, type Area, type ManagedUser, type ManagedUserCreate } from '../../api/staff-admin';
 import { StaffAuthError } from '../../api/staff-auth';
 import { useStaffSession } from '../../app/StaffSession';
 import { DataTable } from '../../design/DataTable';
@@ -13,7 +13,12 @@ import { ListToolbar, Pager, matches } from './ListToolbar';
 import './ManagedUsersPanel.css';
 
 type Values = Omit<ManagedUserCreate, 'confirmed' | 'reason'>;
-export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authorize: (context: string, run: () => Promise<void>) => Promise<void> }) {
+type Props = {
+  areas: Area[]; authorize: (context: string, run: () => Promise<void>) => Promise<void>;
+  /** Super administrators create users and change status directly; everyone else can only request deletion. */
+  superAdmin: boolean; canRequest: boolean; pendingClosures: ReadonlySet<string>;
+};
+export function ManagedUsersPanel({ areas, authorize, superAdmin, canRequest, pendingClosures }: Props) {
   const { i18n } = useTranslation();
   const sw = i18n.language.startsWith('sw');
   const text = (en: string, translation: string) => sw ? translation : en;
@@ -24,6 +29,7 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(false);
   const [statusChange, setStatusChange] = useState<{ user: ManagedUser; status: ManagedUserStatusCommand['status'] } | null>(null);
+  const [deletion, setDeletion] = useState<ManagedUser | null>(null);
   const [notice, setNotice] = useState('');
   const [values, setValues] = useState<Values | null>(null);
   const users = useQuery({ queryKey: ['managed-users', page, kind], queryFn: ({ signal }) => loadManagedUsers(page, kind, signal), retry: false });
@@ -39,17 +45,22 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
     { accessorKey: 'phone_verified', header: text('Phone verified', 'Simu imethibitishwa'), cell: ({ row }) => row.original.phone_verified ? text('Yes', 'Ndiyo') : text('Pending', 'Inasubiri') },
     { id: 'actions', header: text('Actions', 'Vitendo'), cell: ({ row }) => row.original.status === 'closed'
       ? <span>{text('Closed · history retained', 'Imefungwa · historia imehifadhiwa')}</span>
+      : !superAdmin ? (pendingClosures.has(row.original.id)
+        ? <span className="member-pending">{text('Deletion awaiting super admin approval', 'Ufutaji unasubiri idhini ya msimamizi mkuu')}</span>
+        : <Button kind="secondary" disabled={!canRequest} onClick={() => { setNotice(''); setDeletion(row.original); }}>{text('Request deletion…', 'Omba kufuta…')}</Button>)
       : <div className="member-row-actions"><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: row.original.status === 'active' ? 'suspended' : 'active' }); }}>{row.original.status === 'active' ? text('Disable…', 'Sitisha…') : text('Enable…', 'Wezesha…')}</Button><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: 'closed' }); }}>{text('Close account…', 'Funga akaunti…')}</Button></div> },
   ];
   return <><Panel title={text('Riders, drivers and partners', 'Abiria, madereva na washirika')}>
     <ListToolbar search={{ label: text('Search this page', 'Tafuta kwenye ukurasa huu'), placeholder: text('Search this page', 'Tafuta kwenye ukurasa huu'), value: query, onChange: setQuery, clearLabel: text('Clear search', 'Futa utafutaji') }}
       filter={{ label: text('Filter users', 'Chuja watumiaji'), value: kind, onChange: value => { setKind(value); setPage(1); }, options: [{ id: '', label: text('All', 'Wote') }, { id: 'rider', label: text('Riders', 'Abiria') }, { id: 'driver', label: text('Drivers', 'Madereva') }, { id: 'partner', label: text('Partners', 'Washirika') }] }}
       count={users.data ? `${rows.length} ${text('of', 'kati ya')} ${users.data.total}` : undefined}
-      action={<Button kind="secondary" disabled={users.isPending || !!users.error} onClick={() => { setNotice(''); setEditing(true); }}>{text('Create user…', 'Unda mtumiaji…')}</Button>}/>
-    <p className="list-hint">{text('Sends a password setup link. Phone and driver or partner verification still apply.', 'Hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
-    <p className="list-hint">{text('Disabling stops access. Closing preserves history and cannot be undone here.', 'Kusitisha huzuia ufikiaji. Kufunga huhifadhi historia na hakuwezi kutenguliwa hapa.')}</p>
+      action={superAdmin ? <Button kind="secondary" disabled={users.isPending || !!users.error} onClick={() => { setNotice(''); setEditing(true); }}>{text('Create user…', 'Unda mtumiaji…')}</Button> : undefined}/>
+    {superAdmin ? <>
+      <p className="list-hint">{text('Sends a password setup link. Phone and driver or partner verification still apply.', 'Hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
+      <p className="list-hint">{text('Disabling stops access. Closing preserves history and cannot be undone here.', 'Kusitisha huzuia ufikiaji. Kufunga huhifadhi historia na hakuwezi kutenguliwa hapa.')}</p>
+    </> : <p className="list-hint">{text('Deleting an account needs a super administrator’s approval. Trip and payment history is kept.', 'Kufuta akaunti kunahitaji idhini ya msimamizi mkuu. Historia ya safari na malipo huhifadhiwa.')}</p>}
     {notice && <p role="status" className="access-notice">{notice}</p>}
-    {users.error ? <div role="alert"><p>{text('Users could not be loaded. Super administrator access is required.', 'Watumiaji hawakupakiwa. Ufikiaji wa msimamizi mkuu unahitajika.')}</p><Button kind="secondary" onClick={() => void users.refetch()}>{text('Try again', 'Jaribu tena')}</Button></div> : <>
+    {users.error ? <div role="alert"><p>{text('Users could not be loaded. Check your access, then try again.', 'Watumiaji hawakupakiwa. Hakiki ufikiaji wako kisha ujaribu tena.')}</p><Button kind="secondary" onClick={() => void users.refetch()}>{text('Try again', 'Jaribu tena')}</Button></div> : <>
       <DataTable rows={rows} columns={columns} externalPagination filterable={false} loading={users.isPending} previousTimestamp={null}/>
       {users.data && <Pager page={page} last={users.data.lastPage} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>}
     </>}
@@ -68,6 +79,16 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
           throw error;
         }
       }}/> }
+    {deletion && <ConfirmDialog key={`delete-${deletion.id}`} title={`${text('Request account deletion', 'Omba kufuta akaunti')}: ${deletion.display_name}`}
+      version={deletion.version} currentVersion={users.data?.data.find(user => user.id === deletion.id)?.version ?? -1} canConfirm onCancel={() => setDeletion(null)} onConfirm={async confirmation => {
+        try {
+          await authorize(JSON.stringify(['account_closure', deletion.id, confirmation.version, confirmation.idempotencyKey]), () => requestAccountClosure(deletion, confirmation.reason, confirmation.idempotencyKey));
+          setDeletion(null); setNotice(text('Deletion requested. A super administrator must approve it.', 'Ombi la kufuta limetumwa. Msimamizi mkuu lazima aliidhinishe.'));
+        } finally {
+          void client.invalidateQueries({ queryKey: ['staff-management', 'requests'] });
+          void client.invalidateQueries({ queryKey: ['managed-users'] });
+        }
+      }}/>}
     {editing && <MemberEditor areas={areas} locale={sw ? 'sw' : 'en'} onCancel={() => setEditing(false)} onReview={setValues}/>}
     {values && <ConfirmDialog title={text('Create Ravu user', 'Unda mtumiaji wa Ravu')} version={0} currentVersion={0} canConfirm onCancel={() => setValues(null)} onConfirm={async confirmation => {
       const payload: ManagedUserCreate = { ...values, reason: confirmation.reason, confirmed: true };
