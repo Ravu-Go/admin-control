@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { mockStaffApi } from './staff-api';
 export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean; superAdmin?: boolean; invitations?: boolean } = {}) {
   await mockStaffApi(page, { authenticated: true, permissions: ['overview.read', 'access.read', 'access.manage', 'access.approve'] });
-  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, resends: 0, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], invitations: [] as { id: string; version: number; status: string; [key: string]: unknown }[], users: [] as Record<string, unknown>[], staffQueries: [] as string[] };
+  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, resends: 0, statusUpdates: 0, statusConflict: false, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], invitations: [] as { id: string; version: number; status: string; [key: string]: unknown }[], users: [] as Record<string, unknown>[] };
   const now = '2026-11-26T10:00:00Z';
   const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
   const role = { ...metadata, id: '2', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'fictional-reviewer', enabled: true, protected: false, defaults: false, permissions: ['accounts.read'] };
@@ -41,6 +41,16 @@ export async function mockStaffManagement(page: Page, options: { forbidden?: boo
       { ...metadata, id: '43', staff_id: 'STAFF-TEST-001', last_activity_at: now, expires_at: '2099-01-01T00:00:00Z', revoked: true, current: false },
     ]);
     if (path.startsWith('managed-users') && route.request().method() === 'GET') return send(state.users);
+    if (/^managed-users\/[^/]+\/status$/.test(path)) {
+      if (!options.superAdmin || state.proof !== 'access.manage') return send(null, 403);
+      state.proof = '';
+      const body = route.request().postDataJSON();
+      const current = state.users.find(user => user.id === path.split('/')[1]);
+      if (state.statusConflict || !current || current.version !== body.version || !body.confirmed) return send(null, 409);
+      state.statusUpdates++; state.command = body; state.headers = await route.request().allHeaders();
+      current.status = body.status; current.version = Number(current.version) + 1;
+      return send(current);
+    }
     if (path === 'managed-users') {
       if (!options.superAdmin || state.proof !== 'access.manage') return send(null, 403);
       state.proof = ''; state.members++; state.command = route.request().postDataJSON(); state.headers = await route.request().allHeaders();
