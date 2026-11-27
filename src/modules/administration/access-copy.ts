@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 const sw: Record<string, string> = {
+  "Protected owner role": "Jukumu la mmiliki lililolindwa",
+  "Your granted capabilities apply globally. The protected owner role prevents accidental self-lockout.": "Ruhusa ulizopewa zinatumika katika mfumo mzima. Jukumu la mmiliki lililolindwa huzuia kujifungia nje kwa bahati mbaya.",
   "Staff roles and permissions": "Majukumu na ruhusa za watumishi",
   "Invite staff…": "Alika mtumishi…",
   "Add admin or staff…": "Ongeza msimamizi au mtumishi…",

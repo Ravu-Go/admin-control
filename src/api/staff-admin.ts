@@ -63,3 +63,8 @@ export const loadManagedUsers = (pageNumber: number, kind: string, signal?: Abor
 export async function createManagedUser(command: ManagedUserCreate, idempotencyKey: string): Promise<void> {
   z.object({ data: managedUser }).parse(await staffRequest(base + 'managed-users', command, undefined, false, idempotencyKey));
 }
+
+export type ManagedUserStatusCommand = components['schemas']['ManagedUserStatusCommand'];
+export async function changeManagedUserStatus(user: ManagedUser, command: ManagedUserStatusCommand, idempotencyKey: string): Promise<void> {
+  z.object({ data: managedUser }).parse(await staffRequest(base + `managed-users/${encodeURIComponent(user.id)}/status`, command, undefined, false, idempotencyKey));
+}
