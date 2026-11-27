@@ -56,11 +56,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   </header>;
 }
 
-export function AppShell({ children, title, description, hideHeader = false }: { children: ReactNode; title: string; description: string; hideHeader?: boolean }) {
+export function AppShell({ children, title, description, hideHeader = false, bodyLayout = 'default' }: { children: ReactNode; title: string; description: string; hideHeader?: boolean; bodyLayout?: 'default' | 'accounts' }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   return <div className="app-shell"><a className="skip-link" href="#main">{t('skip')}</a>
     <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)}/><TopBar onMenu={() => setMenuOpen(!menuOpen)}/>
-    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} subtitle={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
+    <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} subtitle={description}/>}<div className={`page-body${bodyLayout === 'accounts' ? ' page-body-accounts' : ''}`} data-testid="playground-body">{children}</div></main>
   </div>;
 }

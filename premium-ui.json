@@ -1,0 +1,18 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src"],
+  "locale": "en-TZ",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Select/Listbox", "Form", "CRUD"],
+  "ownership": { "Select/Listbox": "native" },
+  "requiredCommands": ["unit", "e2e", "accessibility"],
+  "commands": {
+    "unit": "npm test -- --maxWorkers=2",
+    "e2e": "npm run test:e2e",
+    "accessibility": "npm run test:e2e -- tests/accounts.spec.ts --grep accessibility"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/accounts.spec.ts",
+    "failurePaths": "tests/accounts.spec.ts"
+  }
+}

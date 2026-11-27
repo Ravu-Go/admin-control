@@ -290,7 +290,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** list accounts */
+        /** List scoped clients and drivers; q accepts opaque numeric account IDs only */
         get: operations["list_accounts"];
         put?: never;
         /** create account */
@@ -2700,6 +2700,38 @@ export interface components {
             membership_status: string | null;
             dispatch_eligibility: components["schemas"]["Eligibility"];
             appeal_available: boolean;
+            area_name: components["schemas"]["BilingualCopy"] | null;
+        };
+        AccountDetail: {
+            id: string;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            created_by: string | null;
+            updated_by: string | null;
+            display_name: string;
+            /** @enum {string} */
+            kind: "client" | "driver" | "partner" | "staff";
+            phone_masked: string;
+            email_masked: string | null;
+            nida_masked: string | null;
+            /** @enum {string} */
+            account_status: "active" | "suspended" | "closed";
+            /** @enum {string} */
+            verification_status: "not_started" | "pending" | "under_review" | "verified" | "rejected" | "suspended" | "expired";
+            membership_status: string | null;
+            dispatch_eligibility: components["schemas"]["Eligibility"];
+            appeal_available: boolean;
+            area_name: components["schemas"]["BilingualCopy"] | null;
+            history: {
+                id: string;
+                action: string;
+                /** Format: date-time */
+                created_at: string;
+            }[];
         };
         AccountCreate: {
             /** @enum {boolean} */
@@ -2728,6 +2760,7 @@ export interface components {
             /** @enum {string} */
             status: "active" | "suspended";
             member_reason: components["schemas"]["BilingualCopy"];
+            evidence_reference?: string | null;
         };
         DisclosureRequest: {
             /** Format: int64 */
@@ -4168,7 +4201,7 @@ export interface components {
             meta: components["schemas"]["Meta"];
         };
         get_accountResponse: {
-            data: components["schemas"]["Account"];
+            data: components["schemas"]["AccountDetail"];
             meta: components["schemas"]["Meta"];
         };
         get_eligibilityResponse: {

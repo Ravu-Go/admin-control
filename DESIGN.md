@@ -143,3 +143,8 @@ A01 uses four KPI columns, two time-series panels and three lower panels at desk
 Verify against the private A01 reference at 1440px desktop, 390px mobile, both languages, keyboard, empty/error/denied states and axe. Shared shell geometry and behavior remain covered by existing tests.
 
 The approved header-system decision in API docs/admin/DECISIONS.md governs buttons and tabs: primary actions use sidebar navy, blue remains for links/focus/data, and header control labels use 600 weight. These specific controls take precedence over older generic action-colour and two-weight notes above.
+
+
+## Accounts A02/A03
+
+Reuse PageHeader, SegmentedFilter for directory filters, Tabs/TabPanel for review sections, DataTable and Pager, StatusBadge, Timeline, Panel and Button. The canonical ownership map is UX-CONTRACT.md. Preserve the two-column account-summary/confirmation layout on desktop; stack panels below 900px. Both EN/SW reasons are required by the API, so the native A03 confirmation panel grows vertically. Driver eligibility remains server-derived and separate from account/document/membership status. No Figma AI or canvas changes.
