@@ -9,7 +9,7 @@ async function confirmAndVerify(page: Page) {
   await confirmation.getByRole('button', { name: 'Confirm', exact: true }).click();
   const verification = page.locator('.identity-dialog');
   await verification.getByLabel('Current password', { exact: true }).fill('Fictional-Password1234!');
-  await verification.getByLabel('Verification code', { exact: true }).fill('123456');
+  await verification.getByRole('button', { name: 'Verify and continue' }).click();
 }
 test('invite form requires confirmation and fresh authentication before sending one pending request', async ({ page }) => {
   const state = await mockStaffManagement(page);

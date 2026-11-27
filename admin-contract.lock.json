@@ -1,8 +1,8 @@
 {
   "source_repository": "Ravu-Go/Ravu-API",
-  "source_commit": "c0ecbf19f753769c71cf1a4a2478e8332dc0bdb6",
+  "source_commit": "0222bad4c16717572c124d59cd50c3c84b93f6e5",
   "source_path": "openapi/admin.yaml",
   "contract_version": "0.1.8",
-  "source_sha256": "3d43197897e50da90af9b9ae65b0d7909720eae7f0808d4665878cc2ea37f8fe",
-  "generated_sha256": "6166b06b0d0d55b19855e60653fe597263139d127abe9f321f64bddbb79772fa"
+  "source_sha256": "8656fe40b5127d74d06432e40dab56de6485636b6b3e99258bec2aa5919d694b",
+  "generated_sha256": "e3cf938f41d323641d184338e741b3f00ef72eb2f89c585ed43a07b502f8137a"
 }

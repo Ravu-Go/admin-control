@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +7,9 @@ import type { StaffStepUpRequest } from '../api/staff-auth';
 import { StaffAuthError } from '../api/staff-auth';
 import { Button } from './components';
 import { PasswordInput } from './PasswordInput';
-import { VerificationCodeInput } from './VerificationCodeInput';
 
-export type VerificationCredentials = Pick<StaffStepUpRequest, 'password' | 'code'>;
+/** Critical actions re-check the password only; MFA was completed at sign-in (DECISIONS.md, 27 Nov 2026). */
+export type VerificationCredentials = Pick<StaffStepUpRequest, 'password'>;
 
 /** Transport-free form: production and explicitly fictional previews supply separate handlers. */
 export function IdentityVerificationDialog<T>({ contextKey, canVerify, deadline, actionLabel, preview = false, verify, onVerified, onCancel, onExpired }: {
@@ -29,7 +29,7 @@ export function IdentityVerificationDialog<T>({ contextKey, canVerify, deadline,
   const cancelled = useRef(false);
   const latest = useRef({ contextKey, canVerify, deadline });
   useLayoutEffect(() => { latest.current = { contextKey, canVerify, deadline }; }, [contextKey, canVerify, deadline]);
-  const form = useForm<VerificationCredentials>({ resolver: zodResolver(z.object({ password: z.string().min(1, t('passwordError')).max(512), code: z.string().regex(/^\d{6}$/, t('codeError')) })), defaultValues: { password: '', code: '' } });
+  const form = useForm<VerificationCredentials>({ resolver: zodResolver(z.object({ password: z.string().min(1, t('passwordError')).max(512) })), defaultValues: { password: '' } });
   useEffect(() => {
     alive.current = true;
     const previous = document.activeElement;
@@ -65,13 +65,12 @@ export function IdentityVerificationDialog<T>({ contextKey, canVerify, deadline,
     } finally { if (controller.current === pending) controller.current = null; if (alive.current && !cancelled.current) setBusy(false); }
   };
   return <dialog ref={dialog} className="confirm-dialog identity-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} onCancel={event => { event.preventDefault(); cancel(); }}>
-    <form noValidate onSubmit={event => void form.handleSubmit(submit, () => { form.resetField('password', { keepError: true }); form.resetField('code', { keepError: true }); })(event)}>
+    <form noValidate onSubmit={event => void form.handleSubmit(submit, () => { form.resetField('password', { keepError: true }); })(event)}>
       <h2 id={`${id}-title`}>{t(preview ? 'reauthPreview' : 'reauthTitle')}</h2>
       <p className="identity-action">{actionLabel}</p><p id={`${id}-description`}>{t(preview ? 'reauthPreviewCopy' : 'reauthDescription')}</p>
       {blocked && <p role="alert">{t(!canVerify ? 'permissionDenied' : expired ? 'loginExpired' : 'stale')}</p>}
-      <label htmlFor={`${id}-password`}>{t(preview ? 'examplePassword' : 'currentPassword')}</label><PasswordInput id={`${id}-password`} autoComplete={preview ? 'off' : 'current-password'} maxLength={512} {...form.register('password')} aria-invalid={!!form.formState.errors.password} aria-describedby={form.formState.errors.password ? `${id}-password-error` : undefined}/>
+      <label htmlFor={`${id}-password`}>{t(preview ? 'examplePassword' : 'currentPassword')}</label><PasswordInput id={`${id}-password`} autoFocus autoComplete={preview ? 'off' : 'current-password'} maxLength={512} {...form.register('password')} aria-invalid={!!form.formState.errors.password} aria-describedby={form.formState.errors.password ? `${id}-password-error` : undefined}/>
       {form.formState.errors.password && <p id={`${id}-password-error`} className="field-error" role="alert">{form.formState.errors.password.message}</p>}
-      <Controller control={form.control} name="code" render={({ field, fieldState }) => <VerificationCodeInput {...field} id={`${id}-code`} label={t(preview ? 'exampleCode' : 'verificationCode')} error={fieldState.error?.message} {...(preview ? { autoComplete: 'off' } : {})}/>}/>
       {error && !blocked && <p role="alert">{t(error)}</p>}
       <div className="dialog-actions"><Button kind="secondary" onClick={cancel}>{t('cancel')}</Button><Button type="submit" disabled={blocked || busy || form.formState.isSubmitting}>{t(busy || form.formState.isSubmitting ? 'verifying' : 'verifyAndContinue')}</Button></div>
     </form>
