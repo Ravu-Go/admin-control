@@ -16,6 +16,7 @@ import { PasswordChange } from './PasswordChange';
 import { IdentityVerificationDialog } from '../design/IdentityVerificationDialog';
 import { canOpenRoute, routePermissions } from './permissions';
 import { StaffAccessScreen } from '../modules/administration/StaffAccessScreen';
+import { OverviewScreen } from '../modules/overview/OverviewScreen';
 import { AcceptStaffInvitation } from '../modules/administration/AcceptStaffInvitation';
 
 function ReauthenticationPreview() {
@@ -88,5 +89,5 @@ export function App() {
   if (pathname === '/administration/settings') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="settings"/>{denied ? <AccessDenied/> : <SettingsPage/>}</AppShell>;
   if (pathname === '/administration/audit') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="audit"/>{denied ? <AccessDenied/> : <AuditLogScreen/>}</AppShell>;
   if (pathname === '/administration' || pathname === '/administration/access') return <AppShell title={t('administration')} description="" hideHeader><AdminSections current="access"/><StaffAccessScreen/></AppShell>;
-  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')}>{denied ? <AccessDenied/> : <Routes><Route path="/" element={<Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes>}</AppShell>;
+  return <AppShell title={t(pathname === '/account/security' ? 'changePassword' : states ? 'states' : 'welcome')} description={t(states ? 'statesSubtitle' : 'subtitle')} hideHeader={pathname === '/' && session.enabled_features.includes('overview')}>{denied ? <AccessDenied/> : <Routes><Route path="/" element={session.enabled_features.includes('overview') ? <OverviewScreen/> : <Playground/>}/><Route path="/account/security" element={<SecurityPage/>}/><Route path="/playground/states" element={<StatesPlayground/>}/><Route path="/playground/reauthentication" element={import.meta.env.VITE_APP_ENV !== 'production' ? <ReauthenticationPreview/> : <NotConnected/>}/><Route path="*" element={<NotConnected/>}/></Routes>}</AppShell>;
 }
