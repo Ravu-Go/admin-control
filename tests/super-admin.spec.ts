@@ -8,7 +8,7 @@ async function verify(page: import('@playwright/test').Page) {
   await confirmation.locator('input[type=checkbox]').check();
   await confirmation.getByRole('button', { name: 'Confirm', exact: true }).click();
   await page.getByLabel('Current password', { exact: true }).fill('Fictional-Password1234!');
-  await page.getByLabel('Verification code', { exact: true }).fill('123456');
+  await page.getByRole('button', { name: 'Verify and continue' }).click();
 }
 
 test('super admin applies an administrator invitation directly', async ({ page }) => {

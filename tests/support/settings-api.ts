@@ -20,6 +20,7 @@ export async function mockSettings(page: Page, options: { manage?: boolean } = {
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
     if (path === '/api/v1/company-profile') return send(state.profile);
     if (path === '/api/v1/company-profile/logo') return route.fulfill({ status: 200, headers: { ...headers, 'content-type': 'image/png' }, body: PNG });
+    if (path === '/api/v1/admin/console/auth/step-up' && 'code' in request.postDataJSON()) return send(null, 422);
     if (path === '/api/v1/admin/console/auth/step-up') { state.proof = request.postDataJSON().action; return send({ action: state.proof, expires_at: new Date(Date.now() + 300_000).toISOString() }); }
     if (!path.startsWith('/api/v1/admin/console/company-profile')) return route.fallback();
     if (request.method() === 'GET') return send(state.profile);

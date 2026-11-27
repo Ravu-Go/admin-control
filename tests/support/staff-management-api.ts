@@ -17,6 +17,7 @@ export async function mockStaffManagement(page: Page, options: { forbidden?: boo
     const headers = { 'content-type': 'application/json', 'access-control-allow-origin': 'http://127.0.0.1:4173', 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type,x-xsrf-token,idempotency-key' };
     const send = (data: unknown, status = 200) => route.fulfill({ status, headers, body: JSON.stringify({ data, meta: { server_time: now, request_id: 'fictional-management-request', pagination: { page: 1, per_page: 25, total: Array.isArray(data) ? data.length : 1, last_page: 1 } } }) });
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers });
+    if (path === 'auth/step-up' && 'code' in route.request().postDataJSON()) return send(null, 422);
     if (path === 'auth/step-up') { state.proofs++; state.proof = route.request().postDataJSON().action; return send({ action: state.proof, expires_at: new Date(Date.now() + 300_000).toISOString() }); }
     if (path === 'bootstrap' && options.superAdmin) {
       const { bootstrapFixture } = await import('./staff-api');
