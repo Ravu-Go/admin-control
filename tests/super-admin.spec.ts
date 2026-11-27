@@ -117,7 +117,12 @@ test('owner member disable, enable and closure require confirmation and fresh pr
   const state = await mockStaffManagement(page, { superAdmin: true });
   state.users.push(memberFixture());
   await page.goto('/administration');
-  await expect(page.getByText('Your granted capabilities apply globally.', { exact: false })).toBeVisible();
+  // Guidance lives behind the panel's info icon and appears on hover.
+  const info = page.getByRole('button', { name: 'More information: Role capability matrix' });
+  await expect(page.getByText('Your granted capabilities apply globally.', { exact: false })).toBeHidden();
+  await info.hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Your granted capabilities apply globally.' })).toBeVisible();
+  await expect(info).toHaveAccessibleDescription(/protected owner role prevents accidental self-lockout/);
   await page.getByRole('tab', { name: 'Users', exact: true }).click();
   const row = page.getByRole('row').filter({ hasText: 'Fictional managed member' });
   await expect(row.getByRole('button', { name: 'Disable…', exact: true })).toBeVisible();
@@ -132,8 +137,31 @@ test('owner member disable, enable and closure require confirmation and fresh pr
     expect(state.command).toMatchObject({ confirmed: true, version: index + 1, status: ['suspended','active','closed'][index] });
     expect(state.headers['idempotency-key']).toMatch(/^[a-f0-9-]{36}$/);
   }
-  await expect(row).toContainText('Closed · history retained');
+  await expect(row.getByRole('button', { name: 'Disable…', exact: true })).toHaveCount(0);
+  await row.getByRole('button', { name: 'Delete…', exact: true }).click();
+  await verify(page);
+  await expect(page.getByRole('status').filter({ hasText: 'Account deleted. Its history is kept.' })).toBeVisible();
+  expect(state.command).toMatchObject({ confirmed: true, version: 4, status: 'archived' });
+  await expect(row).toContainText('Deleted · history kept');
   await expect(row.getByRole('button')).toHaveCount(0);
+});
+
+test('owner deletes an open member directly; deletion archives the account', async ({ page }) => {
+  const state = await mockStaffManagement(page, { superAdmin: true });
+  state.users.push(memberFixture());
+  await page.goto('/administration/access?tab=users');
+  const panel = page.getByRole('region', { name: 'Riders, drivers and partners' });
+  await panel.getByRole('button', { name: 'More information: Riders, drivers and partners' }).focus();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Deleting archives the account' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Deleting archives the account' })).toBeHidden();
+  const row = page.getByRole('row').filter({ hasText: 'Fictional managed member' });
+  await row.getByRole('button', { name: 'Delete…', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Delete account · archived, history kept: Fictional managed member' })).toBeVisible();
+  await verify(page);
+  await expect(page.getByRole('status').filter({ hasText: 'Account deleted. Its history is kept.' })).toBeVisible();
+  expect(state.command).toMatchObject({ confirmed: true, version: 1, status: 'archived' });
+  await expect(row).toContainText('Deleted · history kept');
 });
 
 test('a stale member status decision shows conflict and never reports success', async ({ page }) => {
@@ -171,11 +199,11 @@ test('super admin approves a pending account deletion and the account closes', a
   const state = await mockStaffManagement(page, { superAdmin: true, closureRequest: true });
   await page.goto('/administration/access?tab=requests');
   const row = page.locator('.request-row').filter({ hasText: 'Account deletion' });
-  await expect(row).toContainText('Account closed. Trip and payment history kept.');
+  await expect(row).toContainText('Account deleted (archived). Trip, payment and audit history kept.');
   await row.getByRole('button', { name: 'Approve…', exact: true }).click();
   await verify(page);
   await expect(page.getByRole('status').filter({ hasText: 'Request approved.' })).toBeVisible();
   expect(state.reviews).toBe(1);
   await page.getByRole('tab', { name: 'Users' }).click();
-  await expect(page.getByText('Closed · history retained')).toBeVisible();
+  await expect(page.getByText('Deleted · history kept')).toBeVisible();
 });

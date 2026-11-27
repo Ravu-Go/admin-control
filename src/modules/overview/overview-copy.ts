@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 const en = {
   title: 'Welcome back', subtitle: 'Your Ravu system at a glance.', period: 'Reporting period', today: 'Today', week: 'Last 7 days', month: 'Last 30 days',
-  area: 'Operating area', allAreas: 'All permitted areas', audience: 'Account type', allUsers: 'All users', riders: 'Clients', drivers: 'Drivers',
+  area: 'Operating area', allAreas: 'All permitted areas', audience: 'Account type', allUsers: 'All users', riders: 'Clients', drivers: 'Drivers', partners: 'Partners',
   refresh: 'Refresh overview', export: 'Export report', exportUnavailable: 'Report exports will be available in Reports.',
   updated: 'Updated', refreshing: 'Refreshing…', refreshNote: 'Refreshes every minute',
   registered: 'Registered users', allTime: 'All-time', registrations: 'New registrations', periodLabel: 'Selected period',
@@ -15,7 +15,7 @@ const en = {
 };
 const sw: typeof en = {
   title: 'Karibu tena', subtitle: 'Muhtasari wa mfumo wako wa Ravu.', period: 'Kipindi cha ripoti', today: 'Leo', week: 'Siku 7 zilizopita', month: 'Siku 30 zilizopita',
-  area: 'Eneo la huduma', allAreas: 'Maeneo yote yanayoruhusiwa', audience: 'Aina ya akaunti', allUsers: 'Watumiaji wote', riders: 'Wateja', drivers: 'Madereva',
+  area: 'Eneo la huduma', allAreas: 'Maeneo yote yanayoruhusiwa', audience: 'Aina ya akaunti', allUsers: 'Watumiaji wote', riders: 'Wateja', drivers: 'Madereva', partners: 'Washirika',
   refresh: 'Sasisha muhtasari', export: 'Pakua ripoti', exportUnavailable: 'Upakuaji wa ripoti utapatikana katika Ripoti.',
   updated: 'Imesasishwa', refreshing: 'Inasasishwa…', refreshNote: 'Inasasishwa kila dakika',
   registered: 'Watumiaji waliosajiliwa', allTime: 'Tangu mwanzo', registrations: 'Usajili mpya', periodLabel: 'Kipindi kilichochaguliwa',

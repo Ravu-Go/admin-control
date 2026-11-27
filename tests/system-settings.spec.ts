@@ -62,7 +62,8 @@ test('view-only staff see settings without edit controls and pages pass axe', as
   await page.goto('/administration/settings');
   await expect(page.getByLabel('App name')).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Choose logo' })).toBeDisabled();
-  await expect(page.getByText('View only.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'More information: App details' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'View only.' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Administration sections' }).getByRole('link', { name: 'Staff and roles' })).toBeVisible();
   const results = await new AxeBuilder({ page }).include('.system-settings').analyze();
   expect(results.violations.filter(violation => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);

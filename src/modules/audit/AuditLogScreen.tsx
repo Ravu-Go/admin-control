@@ -31,13 +31,14 @@ export function AuditLogScreen() {
     <PageHeader title={text('Audit log', 'Kumbukumbu za ukaguzi')}
       subtitle={text('Append-only record of sensitive access, decisions and configuration changes', 'Kumbukumbu isiyobadilika ya ufikiaji nyeti, maamuzi na mabadiliko ya usanidi')}
       action={<Button icon="download" disabled={!canExport} onClick={() => openExport(true)}>{text('Export authorised scope…', 'Hamisha wigo ulioidhinishwa…')}</Button>}/>
-    <Panel title={text('Activity evidence', 'Ushahidi wa shughuli')}>
+    <Panel title={text('Activity evidence', 'Ushahidi wa shughuli')} info={<>
+      <p>{text('Actor, timestamp, object, old and new values, reason, evidence and request ID are retained. There are no edit or delete controls.', 'Mtendaji, muda, kitu, thamani za zamani na mpya, sababu, ushahidi na kitambulisho cha ombi vinahifadhiwa. Hakuna vidhibiti vya kuhariri au kufuta.')}</p>
+      <p>{text('Export includes the current filter.', 'Uhamishaji unajumuisha kichujio cha sasa.')}</p>
+    </>}>
       <div className="audit-toolbar">
         <SegmentedFilter label={text('Filter events', 'Chuja matukio')} value={filter} onChange={id => setFilter(id as AuditFilter)} options={filters.map(id => ({ id, label: labels[id] }))}/>
-        <span className="audit-toolbar-hint">{text('Export includes the current filter', 'Uhamishaji unajumuisha kichujio cha sasa')}</span>
       </div>
       <NotConnected title={text('Not connected yet', 'Bado haijaunganishwa')}>{text(`Audit events (${labels[filter].toLowerCase()}) will appear here once the audit API is connected. No events are shown until then, and nothing here is sample data.`, `Matukio ya ukaguzi (${labels[filter].toLowerCase()}) yataonekana hapa API ya ukaguzi ikiunganishwa. Hakuna matukio yanayoonyeshwa hadi wakati huo.`)}</NotConnected>
-      <p className="audit-footnote">{text('Actor, timestamp, object, old and new values, reason, evidence and request ID are retained. There are no edit or delete controls.', 'Mtendaji, muda, kitu, thamani za zamani na mpya, sababu, ushahidi na kitambulisho cha ombi vinahifadhiwa. Hakuna vidhibiti vya kuhariri au kufuta.')}</p>
     </Panel>
     {exporting && canExport && <ExportDialog scope={labels[filter]} text={text} onClose={() => openExport(false)}/>}
   </div>;

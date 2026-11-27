@@ -137,7 +137,7 @@ const sw: Record<string, string> = {
   "Account deletion": "Kufuta akaunti",
   "Only a super administrator can approve account deletion.": "Ni msimamizi mkuu pekee anayeweza kuidhinisha kufuta akaunti.",
   "On approval": "Baada ya idhini",
-  "Account closed. Trip and payment history kept.": "Akaunti itafungwa. Historia ya safari na malipo itahifadhiwa.",
+  "Account deleted (archived). Trip, payment and audit history kept.": "Akaunti itafutwa (itahifadhiwa kwenye kumbukumbu). Historia ya safari, malipo na ukaguzi itabaki.",
   "Review request": "Hakiki ombi"
 };
 export function useAccessText() {

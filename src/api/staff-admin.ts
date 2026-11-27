@@ -64,7 +64,7 @@ export async function acceptInvitation(values: components['schemas']['ConsoleInv
 }
 export type ManagedUser = components['schemas']['ManagedUser'];
 export type ManagedUserCreate = components['schemas']['ManagedUserCreate'];
-const managedUser: z.ZodType<ManagedUser> = z.object({ id: z.string(), version: z.number().int().positive(), display_name: z.string(), kind: z.enum(['rider', 'driver', 'partner']), status: z.enum(['active', 'suspended', 'closed']), email_masked: z.string().nullable(), phone_masked: z.string().nullable(), email_verified: z.boolean(), phone_verified: z.boolean(), created_at: z.string() });
+const managedUser: z.ZodType<ManagedUser> = z.object({ id: z.string(), version: z.number().int().positive(), display_name: z.string(), kind: z.enum(['rider', 'driver', 'partner']), status: z.enum(['active', 'suspended', 'closed', 'archived']), email_masked: z.string().nullable(), phone_masked: z.string().nullable(), email_verified: z.boolean(), phone_verified: z.boolean(), created_at: z.string() });
 export const loadManagedUsers = (pageNumber: number, kind: string, signal?: AbortSignal) => page('managed-users?page=' + pageNumber + (kind ? '&kind=' + encodeURIComponent(kind) : ''), managedUser, signal);
 export async function createManagedUser(command: ManagedUserCreate, idempotencyKey: string): Promise<void> {
   z.object({ data: managedUser }).parse(await staffRequest(base + 'managed-users', command, undefined, false, idempotencyKey));

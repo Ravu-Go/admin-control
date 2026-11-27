@@ -10,9 +10,23 @@ export type ButtonKind = 'primary' | 'secondary' | 'ghost' | 'danger';
 export function Button({ children, kind = 'primary', icon, className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: ButtonKind; icon?: string }) {
   return <button type="button" className={`button ${kind} ${className}`.trim()} data-variant={kind} {...props}>{icon && <Icon name={icon} size={16}/>}{children}</button>;
 }
-export function Panel({ title, description, children, className = '' }: { title: string; description?: string; children: ReactNode; className?: string }) {
+/** Secondary guidance behind an info icon: shown on hover, keyboard focus or tap; Escape or leaving hides it. Screen readers get it as the button's description. */
+export function InfoTip({ children, label }: { children: ReactNode; label?: string }) {
+  const { t } = useTranslation();
   const id = useId();
-  return <section className={`panel ${className}`} aria-labelledby={id}><h2 id={id}>{title}</h2>{description && <p className="panel-description">{description}</p>}{children}</section>;
+  const [open, setOpen] = useState(false);
+  return <span className={`info-tip${open ? ' is-open' : ''}`} onMouseLeave={() => setOpen(false)}>
+    <button type="button" className="info-tip-trigger" aria-label={label ?? t('moreInfo')} aria-describedby={id}
+      onClick={() => setOpen(value => !value)} onBlur={() => setOpen(false)} onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); event.currentTarget.blur(); } }}>
+      <Icon name="info" size={16}/>
+    </button>
+    <span role="tooltip" id={id} className="info-tip-bubble">{children}</span>
+  </span>;
+}
+export function Panel({ title, description, info, children, className = '' }: { title: string; description?: string; info?: ReactNode; children: ReactNode; className?: string }) {
+  const id = useId();
+  const { t } = useTranslation();
+  return <section className={`panel ${className}`} aria-labelledby={id}>{info ? <div className="panel-heading"><h2 id={id}>{title}</h2><InfoTip label={`${t('moreInfo')}: ${title}`}>{info}</InfoTip></div> : <h2 id={id}>{title}</h2>}{description && <p className="panel-description">{description}</p>}{children}</section>;
 }
 export function KpiCard({ label, value, detail, context }: { label: string; value: string | null; detail: string; context: string }) {
   return <section className="kpi-card" aria-label={label}><span>{label}</span><small>{context}</small><strong>{value ?? '—'}</strong><p>{detail}</p></section>;

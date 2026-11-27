@@ -82,7 +82,7 @@ export async function mockStaffManagement(page: Page, options: { forbidden?: boo
     if (path === 'access-requests/7/review') {
       if (!options.superAdmin || state.proof !== 'access.approve') return send(null, 403);
       state.proof = ''; state.reviews++;
-      state.users = state.users.map(user => user.id === '21' ? { ...user, status: 'closed', version: 4 } : user);
+      state.users = state.users.map(user => user.id === '21' ? { ...user, status: 'archived', version: 5 } : user);
       const updated = { ...state.requests.find(record => record.id === '7'), status: 'approved', version: 2 };
       state.requests = state.requests.map(record => record.id === '7' ? updated : record);
       return send(updated);

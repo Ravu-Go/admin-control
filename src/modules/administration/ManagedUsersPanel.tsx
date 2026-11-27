@@ -36,41 +36,46 @@ export function ManagedUsersPanel({ areas, authorize, superAdmin, canRequest, pe
   const expired = users.error instanceof StaffAuthError && [401, 419].includes(users.error.status);
   useEffect(() => { if (expired) clear(); }, [expired, clear]);
   const label = (kind: string) => kind === 'rider' ? text('Rider', 'Abiria') : kind === 'driver' ? text('Driver', 'Dereva') : text('Partner', 'Mshirika');
+  const statusLabel = (status: ManagedUser['status']) => ({ active: text('Active', 'Hai'), suspended: text('Disabled', 'Imesitishwa'), closed: text('Closed', 'Imefungwa'), archived: text('Deleted', 'Imefutwa') })[status];
   const rows = (users.data?.data ?? []).filter(user => matches(query, user.display_name, user.email_masked, user.phone_masked));
   const columns: ColumnDef<ManagedUser>[] = [
     { accessorKey: 'display_name', header: text('Name', 'Jina'), cell: ({ row }) => <div className="member-identity"><strong>{row.original.display_name}</strong><small>{row.original.email_masked}</small><small>{row.original.phone_masked}</small></div> },
     { accessorKey: 'kind', header: text('Account type', 'Aina ya akaunti'), cell: ({ row }) => label(row.original.kind) },
-    { accessorKey: 'status', header: text('Status', 'Hali') },
+    { accessorKey: 'status', header: text('Status', 'Hali'), cell: ({ row }) => statusLabel(row.original.status) },
     { accessorKey: 'email_verified', header: text('Email verified', 'Barua pepe imethibitishwa'), cell: ({ row }) => row.original.email_verified ? text('Yes', 'Ndiyo') : text('Pending', 'Inasubiri') },
     { accessorKey: 'phone_verified', header: text('Phone verified', 'Simu imethibitishwa'), cell: ({ row }) => row.original.phone_verified ? text('Yes', 'Ndiyo') : text('Pending', 'Inasubiri') },
-    { id: 'actions', header: text('Actions', 'Vitendo'), cell: ({ row }) => row.original.status === 'closed'
+    { id: 'actions', header: text('Actions', 'Vitendo'), cell: ({ row }) => row.original.status === 'archived'
+      ? <span>{text('Deleted · history kept', 'Imefutwa · historia imehifadhiwa')}</span>
+      : row.original.status === 'closed' && !superAdmin
       ? <span>{text('Closed · history retained', 'Imefungwa · historia imehifadhiwa')}</span>
+      : superAdmin && row.original.status === 'closed'
+      ? <div className="member-row-actions"><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: 'archived' }); }}>{text('Delete…', 'Futa…')}</Button></div>
       : !superAdmin ? (pendingClosures.has(row.original.id)
         ? <span className="member-pending">{text('Deletion awaiting super admin approval', 'Ufutaji unasubiri idhini ya msimamizi mkuu')}</span>
         : <Button kind="secondary" disabled={!canRequest} onClick={() => { setNotice(''); setDeletion(row.original); }}>{text('Request deletion…', 'Omba kufuta…')}</Button>)
-      : <div className="member-row-actions"><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: row.original.status === 'active' ? 'suspended' : 'active' }); }}>{row.original.status === 'active' ? text('Disable…', 'Sitisha…') : text('Enable…', 'Wezesha…')}</Button><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: 'closed' }); }}>{text('Close account…', 'Funga akaunti…')}</Button></div> },
+      : <div className="member-row-actions"><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: row.original.status === 'active' ? 'suspended' : 'active' }); }}>{row.original.status === 'active' ? text('Disable…', 'Sitisha…') : text('Enable…', 'Wezesha…')}</Button><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: 'closed' }); }}>{text('Close account…', 'Funga akaunti…')}</Button><Button kind="secondary" onClick={() => { setNotice(''); setStatusChange({ user: row.original, status: 'archived' }); }}>{text('Delete…', 'Futa…')}</Button></div> },
   ];
-  return <><Panel title={text('Riders, drivers and partners', 'Abiria, madereva na washirika')}>
+  return <><Panel title={text('Riders, drivers and partners', 'Abiria, madereva na washirika')} info={superAdmin ? <>
+      <p>{text('Creating a user sends a password setup link. Phone and driver or partner verification still apply.', 'Kuunda mtumiaji hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
+      <p>{text('Disabling stops access. Closing preserves history and cannot be undone here.', 'Kusitisha huzuia ufikiaji. Kufunga huhifadhi historia na hakuwezi kutenguliwa hapa.')}</p>
+      <p>{text('Deleting archives the account: it can no longer sign in and leaves this list. Trips, payments and the audit log keep its history.', 'Kufuta huhifadhi akaunti kwenye kumbukumbu: haiwezi kuingia tena na huondoka kwenye orodha hii. Safari, malipo na kumbukumbu za ukaguzi huhifadhi historia yake.')}</p>
+    </> : <p>{text('Deleting an account needs a super administrator’s approval. The account is archived and its trip and payment history is kept.', 'Kufuta akaunti kunahitaji idhini ya msimamizi mkuu. Akaunti huhifadhiwa kwenye kumbukumbu na historia ya safari na malipo huhifadhiwa.')}</p>}>
     <ListToolbar search={{ label: text('Search this page', 'Tafuta kwenye ukurasa huu'), placeholder: text('Search this page', 'Tafuta kwenye ukurasa huu'), value: query, onChange: setQuery, clearLabel: text('Clear search', 'Futa utafutaji') }}
       filter={{ label: text('Filter users', 'Chuja watumiaji'), value: kind, onChange: value => { setKind(value); setPage(1); }, options: [{ id: '', label: text('All', 'Wote') }, { id: 'rider', label: text('Riders', 'Abiria') }, { id: 'driver', label: text('Drivers', 'Madereva') }, { id: 'partner', label: text('Partners', 'Washirika') }] }}
       count={users.data ? `${rows.length} ${text('of', 'kati ya')} ${users.data.total}` : undefined}
       action={superAdmin ? <Button kind="secondary" disabled={users.isPending || !!users.error} onClick={() => { setNotice(''); setEditing(true); }}>{text('Create user…', 'Unda mtumiaji…')}</Button> : undefined}/>
-    {superAdmin ? <>
-      <p className="list-hint">{text('Sends a password setup link. Phone and driver or partner verification still apply.', 'Hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
-      <p className="list-hint">{text('Disabling stops access. Closing preserves history and cannot be undone here.', 'Kusitisha huzuia ufikiaji. Kufunga huhifadhi historia na hakuwezi kutenguliwa hapa.')}</p>
-    </> : <p className="list-hint">{text('Deleting an account needs a super administrator’s approval. Trip and payment history is kept.', 'Kufuta akaunti kunahitaji idhini ya msimamizi mkuu. Historia ya safari na malipo huhifadhiwa.')}</p>}
     {notice && <p role="status" className="access-notice">{notice}</p>}
     {users.error ? <div role="alert"><p>{text('Users could not be loaded. Check your access, then try again.', 'Watumiaji hawakupakiwa. Hakiki ufikiaji wako kisha ujaribu tena.')}</p><Button kind="secondary" onClick={() => void users.refetch()}>{text('Try again', 'Jaribu tena')}</Button></div> : <>
       <DataTable rows={rows} columns={columns} externalPagination filterable={false} loading={users.isPending} previousTimestamp={null}/>
       {users.data && <Pager page={page} last={users.data.lastPage} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>}
     </>}
   </Panel>
-    {statusChange && <ConfirmDialog key={`${statusChange.user.id}-${statusChange.status}`} title={`${statusChange.status === 'closed' ? text('Close account · history retained', 'Funga akaunti · historia itahifadhiwa') : statusChange.status === 'suspended' ? text('Disable account', 'Sitisha akaunti') : text('Enable account', 'Wezesha akaunti')}: ${statusChange.user.display_name}`}
+    {statusChange && <ConfirmDialog key={`${statusChange.user.id}-${statusChange.status}`} title={`${statusChange.status === 'archived' ? text('Delete account · archived, history kept', 'Futa akaunti · itahifadhiwa, historia itabaki') : statusChange.status === 'closed' ? text('Close account · history retained', 'Funga akaunti · historia itahifadhiwa') : statusChange.status === 'suspended' ? text('Disable account', 'Sitisha akaunti') : text('Enable account', 'Wezesha akaunti')}: ${statusChange.user.display_name}`}
       version={statusChange.user.version} currentVersion={users.data?.data.find(user => user.id === statusChange.user.id)?.version ?? -1} canConfirm onCancel={() => setStatusChange(null)} onConfirm={async confirmation => {
         const command: ManagedUserStatusCommand = { status: statusChange.status, version: confirmation.version, reason: confirmation.reason, confirmed: true };
         try {
           await authorize(JSON.stringify([statusChange.user.id, command, confirmation.idempotencyKey]), () => changeManagedUserStatus(statusChange.user, command, confirmation.idempotencyKey));
-          setStatusChange(null); setNotice(text('Account status updated.', 'Hali ya akaunti imesasishwa.'));
+          setStatusChange(null); setNotice(statusChange.status === 'archived' ? text('Account deleted. Its history is kept.', 'Akaunti imefutwa. Historia yake imehifadhiwa.') : text('Account status updated.', 'Hali ya akaunti imesasishwa.'));
           void client.invalidateQueries({ queryKey: ['managed-users'] });
           void client.invalidateQueries({ queryKey: ['overview'] });
         } catch (error) {
