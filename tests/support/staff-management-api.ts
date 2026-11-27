@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { mockStaffApi } from './staff-api';
 export async function mockStaffManagement(page: Page, options: { forbidden?: boolean; ownRequest?: boolean; superAdmin?: boolean; invitations?: boolean } = {}) {
   await mockStaffApi(page, { authenticated: true, permissions: ['overview.read', 'access.read', 'access.manage', 'access.approve'] });
-  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, resends: 0, statusUpdates: 0, statusConflict: false, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], invitations: [] as { id: string; version: number; status: string; [key: string]: unknown }[], users: [] as Record<string, unknown>[] };
+  const state = { proposals: 0, reviews: 0, proofs: 0, members: 0, resends: 0, statusUpdates: 0, statusConflict: false, command: null as unknown, headers: {} as Record<string, string>, proof: '', requests: [] as Record<string, unknown>[], invitations: [] as { id: string; version: number; status: string; [key: string]: unknown }[], users: [] as Record<string, unknown>[], staffQueries: [] as string[] };
   const now = '2026-11-26T10:00:00Z';
   const metadata = { version: 1, created_at: now, updated_at: now, created_by: null, updated_by: null };
   const role = { ...metadata, id: '2', name: 'Fictional reviewer', name_sw: 'Mhakiki wa mfano', key: 'fictional-reviewer', enabled: true, protected: false, defaults: false, permissions: ['accounts.read'] };
