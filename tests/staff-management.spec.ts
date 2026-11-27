@@ -39,7 +39,9 @@ test('another administrator can review a pending request after reauthentication'
   await page.getByRole('tab', { name: 'Access requests' }).click();
   await page.getByRole('button', { name: 'Approve…', exact: true }).click();
   await confirmAndVerify(page);
-  await expect(page.getByText('approved', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Request approved.' })).toBeVisible();
+  await page.getByRole('group', { name: 'Filter requests' }).getByRole('button', { name: 'Approved' }).click();
+  await expect(page.locator('.request-row .status-badge')).toHaveText('Approved');
   expect(state.reviews).toBe(1);
 });
 test('self-approval is disabled and denied scope exposes no staff records', async ({ page }) => {
@@ -106,7 +108,7 @@ test('an expired invitation can be resent after confirmation and fresh authentic
   expect(state.resends).toBe(1);
   expect(state.headers['idempotency-key']).toMatch(/^[a-f0-9-]{36}$/);
   expect(state.command).toMatchObject({ version: 1, confirmed: true, reason: 'Fictional reviewed staff administration change' });
-  await expect(page.getByText(/^pending ·/)).toBeVisible();
+  await expect(page.locator('.invitation-row .status-badge')).toHaveText('Pending');
 });
 test('staff forms open as closable popups over the page', async ({ page }) => {
   await mockStaffManagement(page);
@@ -120,4 +122,36 @@ test('staff forms open as closable popups over the page', async ({ page }) => {
   await editor.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(editor).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
+});
+
+test('every tab has search or filters, staff search runs on the server, and sessions split by person', async ({ page }) => {
+  const state = await mockStaffManagement(page);
+  await page.goto('/administration/access?tab=roles');
+  await expect(page.getByRole('searchbox', { name: 'Search capabilities' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Filter roles' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Staff' }).click();
+  await expect(page.getByRole('searchbox')).toHaveCount(1);
+  await page.getByRole('searchbox', { name: 'Find staff' }).fill('Colleague');
+  await expect.poll(() => state.staffQueries.at(-1)).toBe('Colleague');
+  await expect(page.getByRole('group', { name: 'Filter staff' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Access requests' }).click();
+  await expect(page.getByRole('group', { name: 'Filter requests' }).getByRole('button', { name: 'Pending' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.request-row').first()).toContainText('New staff invitation');
+  await page.getByRole('tab', { name: 'Sessions' }).click();
+  await expect(page.getByRole('heading', { name: 'You', level: 3 })).toBeVisible();
+  await expect(page.getByRole('row')).toHaveCount(3);
+  await expect(page.getByRole('row', { name: /Session 41/ })).toContainText('Use Sign out to end this session.');
+  await expect(page.getByRole('row', { name: /Session 42/ }).getByRole('button', { name: 'Revoke…' })).toBeEnabled();
+  await page.getByRole('group', { name: 'Filter sessions' }).getByRole('button', { name: 'Ended' }).click();
+  await expect(page.getByRole('row', { name: /Session 43/ })).toContainText('Revoked');
+  await page.getByRole('button', { name: /Fictional staff colleague/ }).click();
+  await expect(page.getByRole('heading', { name: 'Fictional staff colleague', level: 3 })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('the demo banner and shared-credential note are gone', async ({ page }) => {
+  await mockStaffManagement(page);
+  await page.goto('/administration/access');
+  await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
+  await expect(page.getByText(/DEMO DATA|No shared super-admin credentials|audit reason are required/)).toHaveCount(0);
 });

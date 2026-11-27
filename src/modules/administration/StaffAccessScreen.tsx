@@ -1,10 +1,13 @@
 import { ManagedUsersPanel } from './ManagedUsersPanel';
 import { useEffect, useRef, useState } from 'react';
 import './StaffAccessScreen.css';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AccessRequestsPanel } from './AccessRequestsPanel';
+import { StaffSessionsPanel } from './StaffSessionsPanel';
 import { useTranslation } from 'react-i18next';
 import { StaffAccessPage, type AccessFormCommand } from './StaffAccessPage';
-import { Button, ConfirmDialog, Panel, StatusBadge, type ConfirmedCommand } from '../../design/components';
+import { Button, ConfirmDialog, type ConfirmedCommand } from '../../design/components';
+import { Pager } from './ListToolbar';
 import { CriticalActionDialog } from '../../app/CriticalActionDialog';
 import { useStaffSession } from '../../app/StaffSession';
 import { StaffAuthError, type StaffStepUpRequest } from '../../api/staff-auth';
@@ -23,7 +26,11 @@ export function StaffAccessScreen() {
   const [invitationsPage, setInvitationsPage] = useState(1);
   const [sessionsPage, setSessionsPage] = useState(1);
   const [search, setSearch] = useState('');
+  const staffQuery = useDebounced(search);
+  const [peopleSearch, setPeopleSearch] = useState('');
+  const peopleQuery = useDebounced(peopleSearch);
   const [status, setStatus] = useState('');
+  const [requestStatus, setRequestStatus] = useState('pending');
   const [selectedStaff, setSelectedStaff] = useState(session?.staff_id ?? '');
   const [authorization, setAuthorization] = useState<Authorization | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -33,13 +40,16 @@ export function StaffAccessScreen() {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const enabled = !!session?.permissions.includes('access.read');
   const superAdmin = session?.is_super_admin === true && session.permissions.includes('access.manage') && session.permissions.includes('access.approve');
-  const staff = useQuery({ queryKey: ['staff-management', 'staff', staffPage, status], queryFn: ({ signal }) => loadStaff(staffPage, status, signal), enabled, retry: false });
+  // Search runs on the server so it covers every staff record, not just the loaded page.
+  const staff = useQuery({ queryKey: ['staff-management', 'staff', staffPage, status, staffQuery], queryFn: ({ signal }) => loadStaff(staffPage, status, signal, staffQuery), enabled, retry: false, placeholderData: keepPreviousData });
+  const people = useQuery({ queryKey: ['staff-management', 'session-people', peopleQuery], queryFn: ({ signal }) => loadStaff(1, '', signal, peopleQuery), enabled, retry: false, placeholderData: keepPreviousData });
   const roles = useQuery({ queryKey: ['staff-management', 'roles'], queryFn: ({ signal }) => loadRoles(signal), enabled, retry: false });
   const areas = useQuery({ queryKey: ['staff-management', 'areas'], queryFn: ({ signal }) => loadAreas(signal), enabled, retry: false });
-  const requests = useQuery({ queryKey: ['staff-management', 'requests', requestsPage], queryFn: ({ signal }) => loadRequests(requestsPage, signal), enabled, retry: false });
+  const requests = useQuery({ queryKey: ['staff-management', 'requests', requestsPage, requestStatus], queryFn: ({ signal }) => loadRequests(requestsPage, signal, requestStatus), enabled, retry: false });
+  const pending = useQuery({ queryKey: ['staff-management', 'requests', 'pending-count'], queryFn: ({ signal }) => loadRequests(1, signal, 'pending'), enabled, retry: false });
   const invitations = useQuery({ queryKey: ['staff-management', 'invitations', invitationsPage], queryFn: ({ signal }) => loadInvitations(invitationsPage, signal), enabled, retry: false });
   const sessions = useQuery({ queryKey: ['staff-management', 'sessions', selectedStaff, sessionsPage], queryFn: ({ signal }) => loadSessions(selectedStaff, sessionsPage, signal), enabled: enabled && !!selectedStaff, retry: false });
-  const errors = [staff.error, roles.error, areas.error, requests.error, invitations.error, sessions.error];
+  const errors = [staff.error, people.error, pending.error, roles.error, areas.error, requests.error, invitations.error, sessions.error];
   const expired = errors.some(error => error instanceof StaffAuthError && [401, 419].includes(error.status));
   useEffect(() => { if (expired) clear(); }, [expired, clear]);
   const explain = (error: unknown) => error instanceof StaffAuthError && error.status === 403
@@ -67,23 +77,33 @@ export function StaffAccessScreen() {
       if (selected.kind === 'review') await reviewChange(selected.record, selected.decision, command.reason, command.idempotencyKey);
       else if (selected.kind === 'resend') await resendInvitation(selected.record, command.reason, command.idempotencyKey);
       else await revoke(selected.kind === 'invitation' ? `staff-invitations/${selected.record.id}/revoke` : `staff/${selected.record.staff_id}/sessions/${selected.record.id}/revoke`, selected.record.version, command.reason, command.idempotencyKey);
-      if (mounted.current) { setConfirmation(null); setNotice(selected.kind === 'resend' ? text('Invitation resent.', 'Mwaliko umetumwa tena.') : ''); }
+      if (mounted.current) {
+        setConfirmation(null);
+        setNotice(selected.kind === 'resend' ? text('Invitation resent.', 'Mwaliko umetumwa tena.') : selected.kind === 'review' ? (selected.decision === 'approve' ? text('Request approved.', 'Ombi limeidhinishwa.') : text('Request rejected.', 'Ombi limekataliwa.')) : '');
+      }
     });
   };
-  const pager = (page: number, last: number, setPage: (page: number) => void) => <div className="dialog-actions"><Button kind="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>{text('Previous', 'Iliyotangulia')}</Button><span>{page} / {last}</span><Button kind="secondary" disabled={page >= last} onClick={() => setPage(page + 1)}>{text('Next', 'Inayofuata')}</Button></div>;
+  const pager = (page: number, last: number, setPage: (page: number) => void) => <Pager page={page} last={last} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>;
   const time = (value: string) => new Intl.DateTimeFormat(sw ? 'sw-TZ' : 'en-TZ', { timeZone: 'Africa/Dar_es_Salaam', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) + ' EAT';
-  const requestsPanel = <><Panel title={text('Access requests', 'Maombi ya ufikiaji')}>
-    {requests.isPending ? <p role="status">{text('Loading…', 'Inapakia…')}</p> : requests.error ? <p role="alert">{explain(requests.error)}</p> : <>{requests.data?.data.length === 0 && <p>{text('No access requests.', 'Hakuna maombi ya ufikiaji.')}</p>}{requests.data?.data.map(record => <article className="access-request" key={record.id}>
-      <div><strong>{record.summary.name}</strong><p>{record.kind} · {record.summary.email_masked ?? record.subject_id ?? '—'}</p><StatusBadge status={record.status === 'approved' ? 'success' : record.status === 'rejected' ? 'danger' : 'pending'} label={record.status}/><p>{record.summary.scope?.kind === 'global' ? text('All operations', 'Shughuli zote') : record.summary.scope?.area_id ? `${text('Operating area', 'Eneo la shughuli')}: ${areas.data?.find(area => area.id === String(record.summary.scope?.area_id))?.label ?? record.summary.scope.area_id}` : ''}</p>
-        {record.summary.role_id && <p>{roles.data?.find(role => role.id === record.summary.role_id)?.name ?? record.summary.role_id}</p>}{record.summary.permissions && <details><summary>{text('Proposed permissions', 'Ruhusa zinazopendekezwa')}</summary><ul>{record.summary.permissions.map(permission => <li key={permission}>{permission}</li>)}</ul><p>{text('Enable after approval', 'Wezesha baada ya idhini')}: {String(record.summary.enabled)}</p></details>}<p>{record.reason}</p><small>{time(record.created_at)}</small></div>
-      {record.status === 'pending' && <div className="dialog-actions"><Button kind="secondary" disabled={!session?.permissions.includes('access.approve') || (record.requested_by === session.staff_id && !superAdmin)} onClick={() => setConfirmation({ kind: 'review', record, decision: 'approve' })}>{text('Approve…', 'Idhinisha…')}</Button><Button kind="secondary" disabled={!session?.permissions.includes('access.approve') || (record.requested_by === session.staff_id && !superAdmin)} onClick={() => setConfirmation({ kind: 'review', record, decision: 'reject' })}>{text('Reject…', 'Kataa…')}</Button>{record.requested_by === session?.staff_id && !superAdmin && <small>{text('Another administrator must review your request.', 'Msimamizi mwingine lazima ahakiki ombi lako.')}</small>}</div>}
-    </article>)}{requests.data && pager(requests.data.page, requests.data.lastPage, setRequestsPage)}</>}
-  </Panel><Panel title={text('Staff invitations', 'Mialiko ya watumishi')}>{invitations.isPending ? <p role="status">{text('Loading…', 'Inapakia…')}</p> : invitations.error ? <p role="alert">{explain(invitations.error)}</p> : <>{invitations.data?.data.length === 0 && <p>{text('No staff invitations.', 'Hakuna mialiko ya watumishi.')}</p>}{invitations.data?.data.map(record => <article className="access-request" key={record.id}><div><strong>{record.email_masked}</strong><p>{record.status} · {time(record.expires_at)}</p></div><div className="dialog-actions"><Button kind="secondary" disabled={!['pending', 'expired'].includes(record.status) || !session?.permissions.includes('access.manage')} onClick={() => { setNotice(''); setConfirmation({ kind: 'resend', record }); }}>{text('Resend…', 'Tuma tena…')}</Button><Button kind="secondary" disabled={record.status !== 'pending' || !session?.permissions.includes('access.manage')} onClick={() => { setNotice(''); setConfirmation({ kind: 'invitation', record }); }}>{text('Revoke…', 'Batilisha…')}</Button></div></article>)}{invitations.data && pager(invitations.data.page, invitations.data.lastPage, setInvitationsPage)}</>}</Panel></>;
-  const sessionsPanel = <Panel title={text('Staff sessions', 'Vipindi vya watumishi')}><label>{text('Find staff', 'Tafuta mtumishi')}<input type="search" value={search} onChange={event => setSearch(event.target.value)}/></label><label>{text('Staff member', 'Mtumishi')}<select value={selectedStaff} onChange={event => { setSelectedStaff(event.target.value); setSessionsPage(1); }}><option value={session?.staff_id}>{text('My sessions', 'Vipindi vyangu')}</option>{staff.data?.data.filter(row => row.id !== session?.staff_id && row.display_name.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map(row => <option key={row.id} value={row.id}>{row.display_name} · {row.email_masked}</option>)}</select></label>
-    {sessions.isPending ? <p role="status">{text('Loading…', 'Inapakia…')}</p> : sessions.error ? <p role="alert">{explain(sessions.error)}</p> : <>{sessions.data?.data.length === 0 && <p>{text('No sessions.', 'Hakuna vipindi.')}</p>}{sessions.data?.data.map(record => <article className="access-request" key={record.id}><div><strong>{text('Session', 'Kipindi')} {record.id}</strong><p>{time(record.last_activity_at)} · {record.revoked ? text('Revoked', 'Kimebatilishwa') : text('Not revoked', 'Hakijabatilishwa')}</p>{record.current && <small>{text('Current session — use Sign out to end it.', 'Kipindi cha sasa — tumia Ondoka kukimaliza.')}</small>}</div><Button kind="secondary" disabled={record.current || record.revoked || !session?.permissions.includes('access.manage')} onClick={() => setConfirmation({ kind: 'session', record })}>{text('Revoke…', 'Batilisha…')}</Button></article>)}{sessions.data && pager(sessions.data.page, sessions.data.lastPage, setSessionsPage)}</>}
-  </Panel>;
+  const can = (permission: 'access.manage' | 'access.approve') => !!session?.permissions.includes(permission);
+  const requestsPanel = <AccessRequestsPanel requests={requests} requestStatus={requestStatus} onRequestStatus={value => { setRequestStatus(value); setRequestsPage(1); }} onRequestsPage={setRequestsPage}
+    invitations={invitations} onInvitationsPage={setInvitationsPage} roles={roles.data ?? []} areas={areas.data ?? []} me={session?.staff_id} superAdmin={superAdmin}
+    canApprove={can('access.approve')} canManage={can('access.manage')} explain={explain} time={time}
+    onReview={(record, decision) => { setNotice(''); setConfirmation({ kind: 'review', record, decision }); }}
+    onResend={record => { setNotice(''); setConfirmation({ kind: 'resend', record }); }} onRevoke={record => { setNotice(''); setConfirmation({ kind: 'invitation', record }); }}/>;
+  const sessionsPanel = <StaffSessionsPanel people={people} peopleQuery={peopleSearch} onPeopleQuery={setPeopleSearch} searching={people.isFetching} me={session?.staff_id}
+    selected={selectedStaff} onSelect={id => { setSelectedStaff(id); setSessionsPage(1); }} sessions={sessions} onSessionsPage={setSessionsPage}
+    canManage={can('access.manage')} onRevoke={record => { setNotice(''); setConfirmation({ kind: 'session', record }); }} explain={explain} time={time}/>;
   return <>{notice && <p className="access-notice" role="status">{notice}</p>}{mutationError && <div className="access-notice" role="alert">{mutationError}<Button kind="secondary" onClick={reload}>{text('Reload current status', 'Pakia hali ya sasa')}</Button></div>}
-    <StaffAccessPage isSuperAdmin={superAdmin} pendingRequests={requests.data?.data.filter(record => record.status === 'pending').length || undefined} users={superAdmin ? <ManagedUsersPanel areas={areas.data ?? []} authorize={(context, run) => authorize('access.manage', context, run)}/> : undefined} staff={staff.data?.data ?? []} roles={roles.data ?? []} permissions={session?.permissions ?? []} capabilities={Array.from(new Set(roles.data?.flatMap(role => role.permissions) ?? [])).sort()} areas={areas.data ?? []} loading={enabled && (staff.isPending || roles.isPending || areas.isPending)} error={staff.error || roles.error || areas.error ? explain(staff.error ?? roles.error ?? areas.error) : undefined} onReload={reload} onRequestChange={submitForm} staffFilters={<label>{text('Access status', 'Hali ya ufikiaji')}<select value={status} onChange={event => { setStatus(event.target.value); setStaffPage(1); }}><option value="">{text('All staff', 'Watumishi wote')}</option><option value="active">{text('Active', 'Hai')}</option><option value="suspended">{text('Suspended', 'Amesimamishwa')}</option></select></label>} totalStaff={staff.data?.total} onSearch={setSearch} pagination={staff.data ? pager(staff.data.page, staff.data.lastPage, setStaffPage) : undefined} requests={requestsPanel} sessions={sessionsPanel}/>
+    <StaffAccessPage isSuperAdmin={superAdmin} pendingRequests={pending.data?.total || undefined} users={superAdmin ? <ManagedUsersPanel areas={areas.data ?? []} authorize={(context, run) => authorize('access.manage', context, run)}/> : undefined} staff={staff.data?.data ?? []} roles={roles.data ?? []} permissions={session?.permissions ?? []} capabilities={Array.from(new Set(roles.data?.flatMap(role => role.permissions) ?? [])).sort()} areas={areas.data ?? []} loading={enabled && (staff.isPending || roles.isPending || areas.isPending)} error={staff.error || roles.error || areas.error ? explain(staff.error ?? roles.error ?? areas.error) : undefined} onReload={reload} onRequestChange={submitForm} totalStaff={staff.data?.total}
+      staffSearch={{ value: search, onChange: value => { setSearch(value); setStaffPage(1); }, searching: staff.isFetching && search.trim() !== staffQuery.trim() }} staffStatus={{ value: status, onChange: value => { setStatus(value); setStaffPage(1); } }} pagination={staff.data ? pager(staff.data.page, staff.data.lastPage, setStaffPage) : undefined} requests={requestsPanel} sessions={sessionsPanel}/>
     {confirmation && <ConfirmDialog title={confirmation.kind === 'resend' ? text('Resend invitation', 'Tuma mwaliko tena') : text('Confirm administration request', 'Thibitisha ombi la usimamizi')} version={confirmation.record.version} currentVersion={currentVersion ?? -1} canConfirm onCancel={() => setConfirmation(null)} onConfirm={confirm}/>}
     {authorization && <CriticalActionDialog action={authorization.action} contextKey={authorization.context} actionLabel={authorization.label} onCancel={() => { authorization.reject(new Error('Cancelled')); setAuthorization(null); }} onVerified={() => { const pending = authorization; setAuthorization(null); void pending.run().then(() => { if (mounted.current) { pending.resolve(); reload(); } }).catch(error => { if (mounted.current) { setMutationError(explain(error)); if (error instanceof StaffAuthError && [401, 419].includes(error.status)) clear(); pending.reject(error instanceof Error ? error : new Error('Request failed')); } }); }}/>}</>;
+}
+
+/** Waits for typing to pause before the value is sent to the server. */
+function useDebounced(value: string, delay = 250) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => { const timer = window.setTimeout(() => setSettled(value), delay); return () => window.clearTimeout(timer); }, [value, delay]);
+  return settled;
 }

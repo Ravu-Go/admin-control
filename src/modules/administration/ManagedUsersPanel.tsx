@@ -8,6 +8,7 @@ import { useStaffSession } from '../../app/StaffSession';
 import { DataTable } from '../../design/DataTable';
 import { Button, ConfirmDialog, Panel } from '../../design/components';
 import { DialogHeader } from '../../design/DialogHeader';
+import { ListToolbar, Pager, matches } from './ListToolbar';
 
 type Values = Omit<ManagedUserCreate, 'confirmed' | 'reason'>;
 export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authorize: (context: string, run: () => Promise<void>) => Promise<void> }) {
@@ -18,6 +19,7 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
   const client = useQueryClient();
   const [page, setPage] = useState(1);
   const [kind, setKind] = useState('');
+  const [query, setQuery] = useState('');
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState('');
   const [values, setValues] = useState<Values | null>(null);
@@ -25,6 +27,7 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
   const expired = users.error instanceof StaffAuthError && [401, 419].includes(users.error.status);
   useEffect(() => { if (expired) clear(); }, [expired, clear]);
   const label = (kind: string) => kind === 'rider' ? text('Rider', 'Abiria') : kind === 'driver' ? text('Driver', 'Dereva') : text('Partner', 'Mshirika');
+  const rows = (users.data?.data ?? []).filter(user => matches(query, user.display_name, user.email_masked, user.phone_masked));
   const columns: ColumnDef<ManagedUser>[] = [
     { accessorKey: 'display_name', header: text('Name', 'Jina'), cell: ({ row }) => <><strong>{row.original.display_name}</strong><small>{row.original.email_masked}</small><small>{row.original.phone_masked}</small></> },
     { accessorKey: 'kind', header: text('Account type', 'Aina ya akaunti'), cell: ({ row }) => label(row.original.kind) },
@@ -33,12 +36,15 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
     { accessorKey: 'phone_verified', header: text('Phone verified', 'Simu imethibitishwa'), cell: ({ row }) => row.original.phone_verified ? text('Yes', 'Ndiyo') : text('Pending', 'Inasubiri') },
   ];
   return <><Panel title={text('Riders, drivers and partners', 'Abiria, madereva na washirika')}>
-    <div className="access-panel-tools"><label>{text('Account type', 'Aina ya akaunti')}<select value={kind} onChange={event => { setKind(event.target.value); setPage(1); }}><option value="">{text('All users', 'Watumiaji wote')}</option>{['rider', 'driver', 'partner'].map(item => <option key={item} value={item}>{label(item)}</option>)}</select></label><Button kind="secondary" disabled={users.isPending || !!users.error} onClick={() => { setNotice(''); setEditing(true); }}>{text('Create user…', 'Unda mtumiaji…')}</Button></div>
-    <p>{text('Sends a password setup link. Phone and driver or partner verification still apply.', 'Hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
+    <ListToolbar search={{ label: text('Search this page', 'Tafuta kwenye ukurasa huu'), placeholder: text('Search this page', 'Tafuta kwenye ukurasa huu'), value: query, onChange: setQuery, clearLabel: text('Clear search', 'Futa utafutaji') }}
+      filter={{ label: text('Filter users', 'Chuja watumiaji'), value: kind, onChange: value => { setKind(value); setPage(1); }, options: [{ id: '', label: text('All', 'Wote') }, { id: 'rider', label: text('Riders', 'Abiria') }, { id: 'driver', label: text('Drivers', 'Madereva') }, { id: 'partner', label: text('Partners', 'Washirika') }] }}
+      count={users.data ? `${rows.length} ${text('of', 'kati ya')} ${users.data.total}` : undefined}
+      action={<Button kind="secondary" disabled={users.isPending || !!users.error} onClick={() => { setNotice(''); setEditing(true); }}>{text('Create user…', 'Unda mtumiaji…')}</Button>}/>
+    <p className="list-hint">{text('Sends a password setup link. Phone and driver or partner verification still apply.', 'Hutuma kiungo cha kusanidi nenosiri. Uthibitishaji wa simu na wa dereva au mshirika bado unahitajika.')}</p>
     {notice && <p role="status" className="access-notice">{notice}</p>}
     {users.error ? <div role="alert"><p>{text('Users could not be loaded. Super administrator access is required.', 'Watumiaji hawakupakiwa. Ufikiaji wa msimamizi mkuu unahitajika.')}</p><Button kind="secondary" onClick={() => void users.refetch()}>{text('Try again', 'Jaribu tena')}</Button></div> : <>
-      <DataTable rows={users.data?.data ?? []} columns={columns} externalPagination loading={users.isPending} previousTimestamp={null}/>
-      {users.data && <div className="dialog-actions"><Button kind="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>{text('Previous', 'Iliyotangulia')}</Button><span>{page} / {users.data.lastPage} · {users.data.total}</span><Button kind="secondary" disabled={page >= users.data.lastPage} onClick={() => setPage(page + 1)}>{text('Next', 'Inayofuata')}</Button></div>}
+      <DataTable rows={rows} columns={columns} externalPagination filterable={false} loading={users.isPending} previousTimestamp={null}/>
+      {users.data && <Pager page={page} last={users.data.lastPage} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>}
     </>}
   </Panel>
     {editing && <MemberEditor areas={areas} locale={sw ? 'sw' : 'en'} onCancel={() => setEditing(false)} onReview={setValues}/>}

@@ -33,10 +33,12 @@ test('super admin can review their own pending request', async ({ page }) => {
   await page.goto('/administration');
   await page.getByRole('tab', { name: 'Access requests' }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Fictional invited colleague');
-  await expect(page.getByRole('button', { name: /^Approve/ })).toBeEnabled();
-  await page.getByRole('button', { name: /^Approve/ }).click();
+  await expect(page.getByRole('button', { name: 'Approve…', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Approve…', exact: true }).click();
   await verify(page);
-  await expect(page.getByText('approved', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Request approved.' })).toBeVisible();
+  await page.getByRole('group', { name: 'Filter requests' }).getByRole('button', { name: 'Approved' }).click();
+  await expect(page.locator('.request-row .status-badge')).toHaveText('Approved');
   expect(state.reviews).toBe(1);
 });
 

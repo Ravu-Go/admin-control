@@ -23,8 +23,10 @@ async function page<T>(path: string, schema: z.ZodType<T>, signal?: AbortSignal)
   const result = z.object({ data: z.array(schema), meta: z.object({ pagination: z.object({ total: z.number().int().nonnegative(), page: z.number().int().positive(), last_page: z.number().int().positive() }) }) }).parse(await staffRequest(base + path, undefined, signal));
   return { data: result.data, total: result.meta.pagination.total, page: result.meta.pagination.page, lastPage: result.meta.pagination.last_page };
 }
-export const loadStaff = (pageNumber: number, status: string, signal?: AbortSignal) => page(`staff?page=${pageNumber}${status ? '&status=' + encodeURIComponent(status) : ''}`, staff, signal);
-export const loadRequests = (pageNumber: number, signal?: AbortSignal) => page(`access-requests?page=${pageNumber}`, access, signal);
+const query = (pageNumber: number, filters: Record<string, string>) => new URLSearchParams({ page: String(pageNumber), ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value.trim())) }).toString();
+/** `q` searches every staff record on the server, not just the loaded page. */
+export const loadStaff = (pageNumber: number, status: string, signal?: AbortSignal, q = '') => page(`staff?${query(pageNumber, { status, q: q.trim() })}`, staff, signal);
+export const loadRequests = (pageNumber: number, signal?: AbortSignal, status = '') => page(`access-requests?${query(pageNumber, { status })}`, access, signal);
 export const loadInvitations = (pageNumber: number, signal?: AbortSignal) => page(`staff-invitations?page=${pageNumber}`, invitation, signal);
 export const loadSessions = (id: string, pageNumber: number, signal?: AbortSignal) => page(`staff/${encodeURIComponent(id)}/sessions?page=${pageNumber}`, session, signal);
 export async function loadRoles(signal?: AbortSignal): Promise<Role[]> {

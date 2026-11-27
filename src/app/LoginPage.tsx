@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 import { BrandLogo } from './BrandLogo';
-import { DemoBanner } from './Shell';
 import { useStaffSession } from './StaffSession';
 import { signInStaff, verifyStaffMfa, setupStaffMfa, confirmStaffMfa, signOutStaff, StaffAuthError, type StaffAuthState, type StaffMfaSetup } from '../api/staff-auth';
 import { PasswordChange } from './PasswordChange';
@@ -80,6 +79,6 @@ export function LoginPage() {
         {step !== 'password' && <button className="login-back" type="button" onClick={() => { void signOutStaff().then(() => { setStep('password'); setSetup(null); setError(''); mfa.reset(); }).catch(failure => report(failure, true)); }}>{t('backToSignIn')}</button>}
         <p className="login-help">{t('loginHelp')}</p>
       </div>
-    </main><DemoBanner appEnv={import.meta.env.VITE_APP_ENV || 'staging'} demoMode={import.meta.env.VITE_DEMO_MODE !== 'false'}/>
+    </main>
   </div>;
 }
