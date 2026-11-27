@@ -54,6 +54,7 @@ test('A01 fits desktop and mobile without changing shell geometry', async ({ pag
   await page.screenshot({ path: testInfo.outputPath('overview-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByLabel('Reporting period', { exact: true })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const overflow = await page.locator('body *').evaluateAll(elements => elements.filter(element => element.getBoundingClientRect().right > innerWidth + 1 && getComputedStyle(element).position !== 'absolute').map(element => ({ tag: element.tagName, class: element.className, width: element.getBoundingClientRect().width })));
   await page.screenshot({ path: testInfo.outputPath('overview-mobile.png'), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), JSON.stringify(overflow)).toBe(true);
 });
