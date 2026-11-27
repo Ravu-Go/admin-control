@@ -1,0 +1,9 @@
+# Owner access and member lifecycle controls
+
+The API fixes the canonical super administrator global-scope mismatch that denied Overview despite a granted capability. A real authenticated browser reproduced the denied Overview while the role matrix showed overview.read granted to Super administrator. The API regression reproduces that path; ordinary staff continue to require explicit area/account/global scopes.
+
+The member Users table now offers Disable, Enable and Close account through the existing reason/confirmation and fresh-MFA dialogs. Commands carry the opened version and an idempotency key. Conflict responses refresh the member data and never show success. Closure retains history and is terminal here; staff management stays in the separate existing staff workflow. The system-owner role remains protected and its global-capability policy is explained in EN/SW. Existing tokens, shell and table components are preserved.
+
+Local TypeScript and lint passed (existing TanStack compiler warning only), all 70 unit tests passed, and the first 10 super-admin Playwright tests passed including both new lifecycle and conflict flows. Mobile EN/SW/accessibility coverage and full CI/private native comparison follow. Generated types and the contract lock are finalized only after the API PR merges. No live member has been disabled or closed during development.
+
+The API fix merged through https://github.com/Ravu-Go/Ravu-API/pull/39 as 89679ea55d6dba2e8701b144cdc67aacae8ac897 after full SQLite/PostgreSQL, both static checks, canonical contract, security and private visual CI passed. Generated types are finalized against that merged revision (contract 0.1.6). The additional mobile Swahili test passed with no serious/critical axe findings or document overflow, bringing local owner browser coverage to 11 tests.

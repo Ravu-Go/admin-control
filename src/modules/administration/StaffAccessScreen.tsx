@@ -47,7 +47,7 @@ export function StaffAccessScreen() {
     : error instanceof StaffAuthError && error.status === 409
       ? text('The record changed. Nothing was applied. Reload and review the latest version.', 'Rekodi imebadilika. Hakuna kilichotekelezwa. Pakia upya na uhakiki toleo jipya.')
       : text('The request could not be confirmed. No automatic retry was made. Check current status before trying again.', 'Ombi halikuthibitishwa. Halijarudiwa kiotomatiki. Hakiki hali ya sasa kabla ya kujaribu tena.');
-  const reload = () => { setMutationError(''); void client.invalidateQueries({ queryKey: ['staff-management'] }); };
+  const reload = () => { setMutationError(''); void client.invalidateQueries({ queryKey: ['staff-management'] }); void client.invalidateQueries({ queryKey: ['managed-users'] }); };
   const authorize = (action: StaffStepUpRequest['action'], context: string, run: () => Promise<void>) => new Promise<void>((resolve, reject) => {
     setMutationError(''); setAuthorization({ action, context, run, resolve, reject, label: text('Confirm staff administration change', 'Thibitisha mabadiliko ya usimamizi wa watumishi') });
   });
