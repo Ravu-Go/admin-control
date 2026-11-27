@@ -29,7 +29,7 @@ export function ManagedUsersPanel({ areas, authorize }: { areas: Area[]; authori
   useEffect(() => { if (expired) clear(); }, [expired, clear]);
   const label = (kind: string) => kind === 'rider' ? text('Rider', 'Abiria') : kind === 'driver' ? text('Driver', 'Dereva') : text('Partner', 'Mshirika');
   const columns: ColumnDef<ManagedUser>[] = [
-    { accessorKey: 'display_name', header: text('Name', 'Jina'), cell: ({ row }) => <><strong>{row.original.display_name}</strong><small>{row.original.email_masked}</small><small>{row.original.phone_masked}</small></> },
+    { accessorKey: 'display_name', header: text('Name', 'Jina'), cell: ({ row }) => <div className="member-identity"><strong>{row.original.display_name}</strong><small>{row.original.email_masked}</small><small>{row.original.phone_masked}</small></div> },
     { accessorKey: 'kind', header: text('Account type', 'Aina ya akaunti'), cell: ({ row }) => label(row.original.kind) },
     { accessorKey: 'status', header: text('Status', 'Hali') },
     { accessorKey: 'email_verified', header: text('Email verified', 'Barua pepe imethibitishwa'), cell: ({ row }) => row.original.email_verified ? text('Yes', 'Ndiyo') : text('Pending', 'Inasubiri') },

@@ -119,6 +119,7 @@ test('owner member disable, enable and closure require confirmation and fresh pr
   await expect(page.getByText('Your granted capabilities apply globally.', { exact: false })).toBeVisible();
   await page.getByRole('tab', { name: 'Users', exact: true }).click();
   const row = page.getByRole('row').filter({ hasText: 'Fictional managed member' });
+  await expect(row.getByRole('button', { name: 'Disable…', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('owner-controls-desktop.png'), fullPage: true });
   for (const [index, action] of ['Disable…', 'Enable…', 'Close account…'].entries()) {
     await row.getByRole('button', { name: action, exact: true }).click();
