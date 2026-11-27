@@ -1,6 +1,4 @@
 .audit-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: 16px 0 4px; }
-.audit-toolbar-hint { font-size: 13px; color: var(--color-mutedAccessible); }
-.audit-footnote { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--color-line); font-size: 12px; color: var(--color-mutedAccessible); }
 .export-scope { display: flex; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border-radius: var(--radius-button); background: var(--color-light); }
 .export-scope dt { color: var(--color-mutedAccessible); }
 .export-scope dd { margin: 0; font-weight: 600; }

@@ -3,18 +3,18 @@ import type { components } from './generated/admin';
 import { StaffAuthError, staffRequest } from './staff-auth';
 
 export type OverviewReport = components['schemas']['OverviewReport'];
-export type OverviewFilters = { from: string; to: string; audience: 'both' | 'rider' | 'driver'; area_id?: string };
+export type OverviewFilters = { from: string; to: string; audience: 'both' | 'rider' | 'driver' | 'partner'; area_id?: string };
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const timestamp = z.iso.datetime({ offset: true });
 const schema: z.ZodType<OverviewReport> = z.object({
   kind: z.literal('overview'), period_start: timestamp, period_end: timestamp, timezone: z.literal('Africa/Dar_es_Salaam'),
   metrics: z.array(z.object({ key: z.string(), numerator: count.nullable(), denominator: count.nullable(),
     amount: z.object({ currency: z.literal('TZS'), amount_minor: count }).nullable(), availability: z.enum(['available','unavailable']), unavailable_reason: z.string().nullable() })),
-  filters: z.object({ area_id: z.string().nullable(), audience: z.enum(['both','rider','driver']) }),
+  filters: z.object({ area_id: z.string().nullable(), audience: z.enum(['both','rider','driver','partner']) }),
   areas: z.array(z.object({ id: z.string(), name: z.object({ en: z.string(), sw: z.string() }) })),
-  daily: z.array(z.object({ date: z.iso.date(), riders: count, drivers: count, membership_receipts_minor: count })),
-  user_breakdown: z.object({ riders: count, drivers: count }), memberships: z.array(z.object({ code: z.string(), count })),
-  recent_registrations: z.array(z.object({ id: z.string(), kind: z.enum(['rider','driver']), created_at: timestamp, phone_verified: z.boolean(), email_verified: z.boolean() })).max(5),
+  daily: z.array(z.object({ date: z.iso.date(), riders: count, drivers: count, partners: count, membership_receipts_minor: count })),
+  user_breakdown: z.object({ riders: count, drivers: count, partners: count }), memberships: z.array(z.object({ code: z.string(), count })),
+  recent_registrations: z.array(z.object({ id: z.string(), kind: z.enum(['rider','driver','partner']), created_at: timestamp, phone_verified: z.boolean(), email_verified: z.boolean() })).max(5),
 });
 
 export async function loadOverview(filters: OverviewFilters, signal?: AbortSignal): Promise<{ report: OverviewReport; updatedAt: string }> {

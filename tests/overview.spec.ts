@@ -18,7 +18,12 @@ test('A01 renders scoped figures, EN/SW and URL filters without accessibility vi
   const state = await setup(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'User registrations', exact: true })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Registered users', exact: true })).toContainText('12,500');
+  await expect(page.getByRole('region', { name: 'Registered users', exact: true })).toContainText('12,800');
+  await expect(page.getByRole('region', { name: 'Registered users', exact: true })).toContainText('300 partners');
+  await expect(page.getByRole('region', { name: 'Recent registrations' })).toContainText('Partners · 12498');
+  await page.getByLabel('Account type', { exact: true }).selectOption('partner');
+  await expect.poll(() => state.requests.at(-1)?.searchParams.get('audience')).toBe('partner');
+  await page.getByLabel('Account type', { exact: true }).selectOption('both');
   await page.getByLabel('Operating area', { exact: true }).selectOption('1');
   await expect(page).toHaveURL(/area_id=1/);
   await expect.poll(() => state.requests.at(-1)?.searchParams.get('area_id')).toBe('1');
@@ -38,7 +43,7 @@ test('refresh failures retain a labelled snapshot and revoked access hides the f
   state.status = 503;
   await page.getByRole('button', { name: 'Refresh overview', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('last successful snapshot');
-  await expect(page.getByRole('region', { name: 'Registered users', exact: true })).toContainText('12,500');
+  await expect(page.getByRole('region', { name: 'Registered users', exact: true })).toContainText('12,800');
   state.status = 403;
   await page.getByRole('button', { name: 'Refresh overview', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('do not have access');

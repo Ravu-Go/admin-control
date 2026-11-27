@@ -114,7 +114,7 @@ export function SystemSettingsScreen() {
                 {current.logo_url && <Button kind="secondary" disabled={!canManage} onClick={() => { setFailure(''); setPending({ kind: 'remove' }); }}>{text('Remove…', 'Ondoa…')}</Button>}</>}
           </div>
         </Panel>
-        <Panel title={text('App details', 'Maelezo ya programu')}>
+        <Panel title={text('App details', 'Maelezo ya programu')} info={!canManage ? <p>{text('View only. Changing settings needs the settings.manage permission.', 'Kusoma tu. Kubadilisha mipangilio kunahitaji ruhusa ya settings.manage.')}</p> : undefined}>
           <form className="settings-form" noValidate onSubmit={submitDetails}>
             <label htmlFor={`${id}-name`}>{text('App name', 'Jina la programu')}</label>
             <input id={`${id}-name`} value={values.name} maxLength={120} required disabled={!canManage} onChange={edit('name')} aria-invalid={touched && !!errors?.name} aria-describedby={touched && errors?.name ? `${id}-name-error` : undefined}/>
@@ -131,7 +131,6 @@ export function SystemSettingsScreen() {
               <Button kind="secondary" type="submit" disabled={!canManage || !changed}>{text('Save changes…', 'Hifadhi mabadiliko…')}</Button>
               {draft && changed && <Button kind="secondary" onClick={() => { setDraft(null); setTouched(false); }}>{text('Discard', 'Tupa')}</Button>}
             </div>
-            {!canManage && <p className="settings-hint">{text('View only. Changing settings needs the settings.manage permission.', 'Kusoma tu. Kubadilisha mipangilio kunahitaji ruhusa ya settings.manage.')}</p>}
           </form>
         </Panel>
         <p className="settings-meta">{text('Version', 'Toleo')} {current.version}{updated ? ` · ${text('Last changed', 'Ilibadilishwa')} ${updated}` : ` · ${text('Using defaults', 'Inatumia chaguo-msingi')}`}</p>

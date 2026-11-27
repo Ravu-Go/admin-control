@@ -53,7 +53,7 @@ export function AccessRequestsPanel(props: Props) {
               <dl className="request-facts">
                 {role && <div><dt>{tr('Role')}</dt><dd>{role}</dd></div>}
                 {where && <div><dt>{tr('Scope')}</dt><dd>{where}</dd></div>}
-                {record.kind === 'account_closure' && <div><dt>{tr('On approval')}</dt><dd>{tr('Account closed. Trip and payment history kept.')}</dd></div>}
+                {record.kind === 'account_closure' && <div><dt>{tr('On approval')}</dt><dd>{tr('Account deleted (archived). Trip, payment and audit history kept.')}</dd></div>}
                 <div><dt>{tr('Requested')}</dt><dd><time dateTime={record.created_at}>{props.time(record.created_at)}</time>{own && <small>{tr('Requested by you')}</small>}</dd></div>
                 <div className="request-wide"><dt>{tr('Reason')}</dt><dd>{record.reason}</dd></div>
                 {record.summary.permissions && <div className="request-wide"><dt>{tr('Capabilities')}</dt><dd><ul className="request-chips">{record.summary.permissions.map(permission => <li key={permission}>{permission}</li>)}</ul><small>{tr(record.summary.enabled ? 'Enabled on approval' : 'Stays disabled')}</small></dd></div>}

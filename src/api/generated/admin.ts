@@ -14,7 +14,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Super administrator enables, disables or closes a member account
+         * Super administrator enables, disables, closes or deletes (archives) a member account
          * @description Requires fresh access.manage proof, reason, confirmation and current version. Closure retains history and rejects outstanding rides; closed accounts cannot be reopened here.
          */
         post: operations["change_managed_user_status"];
@@ -2476,7 +2476,7 @@ export interface components {
     schemas: {
         ManagedUserStatusCommand: {
             /** @enum {string} */
-            status: "active" | "suspended" | "closed";
+            status: "active" | "suspended" | "closed" | "archived";
             version: number;
             reason: string;
             /** @enum {boolean} */
@@ -4765,7 +4765,7 @@ export interface components {
             kind: "global" | "area";
             area_id: number | null;
         };
-        /** @description Account deletion request for the rider, driver or partner named by subject_id and subject_version. The server records the name and email. Approval closes the account, keeps its trip and payment history, revokes its sessions and always needs a super administrator. */
+        /** @description Account deletion request for the rider, driver or partner named by subject_id and subject_version. The server records the name and email. Approval archives the account: it is closed, its sessions are revoked, it leaves the directory and the row stays so audit, trip and payment history keep their subject. Always needs a super administrator. */
         ManagementAccountClosure: Record<string, never>;
         ManagementInvite: {
             name: string;
@@ -4841,7 +4841,7 @@ export interface components {
             /** @enum {string} */
             kind: "rider" | "driver" | "partner";
             /** @enum {string} */
-            status: "active" | "suspended" | "closed";
+            status: "active" | "suspended" | "closed" | "archived";
             email_masked: string | null;
             phone_masked: string | null;
             email_verified: boolean;
@@ -4884,7 +4884,7 @@ export interface components {
             filters: {
                 area_id: string | null;
                 /** @enum {unknown} */
-                audience: "both" | "rider" | "driver";
+                audience: "both" | "rider" | "driver" | "partner";
             };
             areas: {
                 id: string;
@@ -4898,11 +4898,13 @@ export interface components {
                 date: string;
                 riders: number;
                 drivers: number;
+                partners: number;
                 membership_receipts_minor: number;
             }[];
             user_breakdown: {
                 riders: number;
                 drivers: number;
+                partners: number;
             };
             memberships: {
                 code: string;
@@ -4911,7 +4913,7 @@ export interface components {
             recent_registrations: {
                 id: string;
                 /** @enum {unknown} */
-                kind: "rider" | "driver";
+                kind: "rider" | "driver" | "partner";
                 /** Format: date-time */
                 created_at: string;
                 phone_verified: boolean;
@@ -5470,8 +5472,8 @@ export interface operations {
                 to?: string;
                 /** @description An active permitted operating area. Omit to aggregate only the caller's permitted areas; explicit global scope includes unattributed history. */
                 area_id?: number;
-                /** @description Default both. Driver membership receipts are zero for rider-only views. */
-                audience?: "both" | "rider" | "driver";
+                /** @description Default both (riders, drivers and partners). Driver membership receipts and online drivers are zero for rider-only and partner-only views. */
+                audience?: "both" | "rider" | "driver" | "partner";
             };
             header?: never;
             path?: never;
@@ -10630,7 +10632,8 @@ export interface operations {
             query?: {
                 page?: number;
                 per_page?: number;
-                status?: string;
+                /** @description Archived (deleted) accounts are returned only when status=archived. */
+                status?: "active" | "suspended" | "closed" | "archived";
                 kind?: "rider" | "driver" | "partner";
             };
             header?: never;
