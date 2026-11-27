@@ -17,3 +17,6 @@ Open issues: Export and PII disclosure are unavailable. Document/trip/membership
 Next: Verification A04/A05/A25, preserving mandatory vehicle-bound, one-year LATRA verification for bodas and bajajis, and optional insurance.
 
 API dependency: https://github.com/Ravu-Go/Ravu-API/pull/43 merged as c0ecbf19f753769c71cf1a4a2478e8332dc0bdb6. Target-stack CI passed 322 tests / 11104 assertions; actual masked list/detail responses passed canonical schema validation. SQLite CI passed with 7 expected target-stack skips.
+
+
+Full-browser integration recovery: the first 64-test run passed 61 and exposed three outdated test assumptions. Shell navigation expected the former Accounts placeholder; its fixtures now supply the real masked directory and assert its table. The login fixture now retains CSRF proof from POST requests instead of overwriting it on the new directory GET. The affected Accounts/login/shell subset passed all 18 tests after correction. Native notice height/icon and footer placement were also aligned with A02. No authentication check, test or visual threshold was removed.

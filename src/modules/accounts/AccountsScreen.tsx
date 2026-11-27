@@ -10,6 +10,7 @@ import { changeAccountStatus, loadAccount, loadAccounts, type Account, type Acco
 import { StaffAuthError } from '../../api/staff-auth';
 import { useStaffSession } from '../../app/StaffSession';
 import { Button, Panel, StatusBadge, Timeline } from '../../design/components';
+import { Icon } from '../../design/Icon';
 import { DataTable } from '../../design/DataTable';
 import { PageHeader } from '../../design/PageHeader';
 import { LoadingState } from '../../design/States';
@@ -58,15 +59,16 @@ export function AccountsScreen() {
   ];
   return <div className="accounts-screen">
     <PageHeader title={text('Accounts', 'Akaunti')} subtitle={text('One directory for clients and drivers · Sensitive contact fields are masked by default', 'Orodha moja ya wateja na madereva · Mawasiliano nyeti yamefichwa kwa chaguomsingi')}
-      action={<Button kind="secondary" disabled aria-describedby="account-export-help">{text('Export masked list', 'Hamisha orodha iliyofichwa')}</Button>}/>
+      action={<Button kind="secondary" disabled aria-describedby={!result.isPending && !result.isError ? 'account-export-help' : undefined}>{text('Export masked list', 'Hamisha orodha iliyofichwa')}</Button>}/>
     <div className="accounts-filters"><SegmentedFilter label={text('Account directory filter', 'Chujio cha akaunti')} value={view} onChange={value => { setView(value as typeof view); setPage(1); }} options={views.map(id => ({ id, label: ({ all: text('All accounts', 'Akaunti zote'), drivers: text('Drivers', 'Madereva'), clients: text('Clients', 'Wateja'), needs_review: text('Needs review', 'Zinahitaji ukaguzi') })[id] }))}/></div>
     {result.isPending ? <LoadingState previousTimestamp={null}/> : result.isError ? <Failure error={result.error} retry={() => void result.refetch()}/> : <Panel className="account-directory" title={text('Account directory', 'Orodha ya akaunti')}>
       <DataTable rows={result.data.data} columns={columns} filterable={false} externalPagination loading={result.isFetching} previousTimestamp={null}/>
       <p className="muted">{result.data.meta.pagination.total} {text('accounts · No bulk approval or suspension', 'akaunti · Hakuna kuidhinisha au kusimamisha kwa pamoja')}</p>
+      <p id="account-export-help" className="muted">{text('Controlled exports are not connected yet. Contacts remain masked; no personal data is exported.', 'Uhamishaji unaodhibitiwa haujaunganishwa bado. Mawasiliano yamefichwa; hakuna taarifa binafsi zinazohamishwa.')}</p>
       <Pager page={page} last={result.data.meta.pagination.last_page} onPage={setPage} labels={{ previous: text('Previous', 'Iliyotangulia'), next: text('Next', 'Inayofuata'), page: text('Page', 'Ukurasa'), of: text('of', 'kati ya') }}/>
     </Panel>}
-    <Panel title={text('Review without guessing', 'Kagua bila kubahatisha')} description={text('Open the full account record, evidence and previous decisions before changing account access.', 'Fungua rekodi kamili, ushahidi na maamuzi yaliyotangulia kabla ya kubadili ufikiaji.')}><span/></Panel>
-    <p id="account-export-help" className="muted">{text('Controlled exports are not connected yet. Contacts remain masked; no personal data is exported.', 'Uhamishaji unaodhibitiwa haujaunganishwa bado. Mawasiliano yamefichwa; hakuna taarifa binafsi zinazohamishwa.')}</p>
+    <Panel className="account-review-notice" title={text('Review without guessing', 'Kagua bila kubahatisha')} description={text('Open the full account record, evidence and previous decisions before changing account access.', 'Fungua rekodi kamili, ushahidi na maamuzi yaliyotangulia kabla ya kubadili ufikiaji.')}><Icon name="shield" size={22}/></Panel>
+
   </div>;
 }
 

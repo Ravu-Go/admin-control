@@ -29,7 +29,7 @@ export async function mockStaffApi(page: Page, options: { authenticated?: boolea
       if (options.expired) bootstrap.session_expires_at = '2020-01-01T00:00:00Z';
       return json(state.authenticated ? 200 : 401, state.authenticated ? bootstrap : null);
     }
-    state.csrfHeader = (await route.request().allHeaders())['x-xsrf-token'] || '';
+    if (route.request().method() === 'POST') state.csrfHeader = (await route.request().allHeaders())['x-xsrf-token'] || '';
     if (route.request().method() === 'POST' && state.csrfRejections > 0) {
       state.csrfRejections--;
       return json(419, null);

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mockStaffApi } from './support/staff-api';
-test.beforeEach(async ({ page }) => { await mockStaffApi(page, { authenticated: true }); });
+import { mockAccounts } from './support/accounts-api';
+test.beforeEach(async ({ page }) => { await mockStaffApi(page, { authenticated: true }); await mockAccounts(page, { existingSession: true }); });
 test('shell navigation, language, keyboard and confirmation', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back');
@@ -18,7 +19,8 @@ test('shell navigation, language, keyboard and confirmation', async ({ page }) =
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('status')).toContainText('No live action');
   await page.getByRole('link', { name: 'Accounts', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'This area is not connected yet.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
 });
 test('shared playground and A28 have no serious accessibility violations', async ({ page }) => {
   for (const route of ['/', '/playground/states']) {
@@ -41,5 +43,6 @@ test('mobile navigation is reachable', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('link', { name: 'Accounts', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'This area is not connected yet.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
 });

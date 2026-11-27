@@ -2,8 +2,8 @@ import type { Page } from '@playwright/test';
 import { mockStaffApi } from './staff-api';
 import { accountFixture } from './accounts-fixture';
 
-export async function mockAccounts(page: Page, options: { readOnly?: boolean } = {}) {
-  await mockStaffApi(page, { authenticated: true, enabledFeatures: ['accounts'], permissions: options.readOnly ? ['accounts.read'] : ['accounts.read', 'accounts.manage'] });
+export async function mockAccounts(page: Page, options: { readOnly?: boolean; existingSession?: boolean } = {}) {
+  if (!options.existingSession) await mockStaffApi(page, { authenticated: true, enabledFeatures: ['accounts'], permissions: options.readOnly ? ['accounts.read'] : ['accounts.read', 'accounts.manage'] });
   const state = { account: accountFixture(), status: 200, listStatus: 200, delay: 0, readDelay: 0, empty: false, calls: [] as { body: Record<string, unknown>; key: string }[], queries: [] as URL[] };
   await page.route('**/api/v1/admin/console/accounts**', async route => {
     const url = new URL(route.request().url());
