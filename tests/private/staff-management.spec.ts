@@ -30,12 +30,12 @@ test('super administrator user creation and member setup evidence stays private'
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/administration');
     await page.getByRole('tab', { name: 'Users', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Create user', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Create user…', exact: true })).toBeEnabled();
     await page.evaluate(() => document.fonts.ready);
     const directory = testInfo.outputPath(`a22-owner-users-${width}.png`);
     await page.screenshot({ path: directory, fullPage: true });
     await testInfo.attach(`a22-owner-users-${width}`, { path: directory, contentType: 'image/png' });
-    await page.getByRole('button', { name: 'Create user', exact: true }).click();
+    await page.getByRole('button', { name: 'Create user…', exact: true }).click();
     const editor = testInfo.outputPath(`a22-create-member-${width}.png`);
     await page.screenshot({ path: editor, fullPage: true });
     await testInfo.attach(`a22-create-member-${width}`, { path: editor, contentType: 'image/png' });
