@@ -1,2 +1,102 @@
-.staff-access .access-table-scroll{max-height:440px;overflow:auto}.staff-access .access-matrix thead th{position:sticky;top:0;z-index:1}.access-request{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:20px 0;border-bottom:1px solid var(--color-line);overflow-wrap:anywhere}.access-request p{color:var(--color-mutedAccessible);line-height:1.5}.access-request .dialog-actions{flex-wrap:wrap}.staff-access select{max-width:100%}.access-security-note .icon{flex-shrink:0}.staff-access .panel+.panel{margin-top:24px}@media(max-width:760px){.access-request{flex-direction:column}.staff-access .access-table-scroll{max-height:60vh}}
-.staff-access .access-panel-tools select{padding:12px;border:1px solid var(--color-line);border-radius:var(--radius-badge);color:var(--color-ink);background:var(--color-white)}
+.staff-access .access-table-scroll { max-height: 440px; overflow: auto; }
+.staff-access .access-matrix thead th { position: sticky; top: 0; z-index: 1; }
+.staff-access select { max-width: 100%; }
+.staff-access .panel + .panel { margin-top: 24px; }
+
+/* One toolbar for every list: search, segmented filter, then count and action. */
+.list-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.search-field { position: relative; flex: 1 1 260px; max-width: 360px; color: var(--color-mutedAccessible); }
+.search-field > .icon { position: absolute; left: 12px; top: 11px; pointer-events: none; }
+.search-field input { width: 100%; height: 40px; padding: 0 40px; border: 1px solid var(--color-line); border-radius: var(--radius-button); background: var(--color-white); color: var(--color-ink); font: inherit; font-size: 14px; transition: border-color .15s ease-out; }
+.search-field input::placeholder { color: var(--color-mutedAccessible); opacity: 1; }
+.search-field input::-webkit-search-cancel-button { appearance: none; }
+.search-field input:hover { border-color: color-mix(in srgb, var(--color-ink) 22%, var(--color-line)); }
+.search-field input:focus-visible { border-color: var(--color-blue); outline: 3px solid color-mix(in srgb, var(--color-blue) 28%, transparent); outline-offset: 0; }
+.search-clear { position: absolute; right: 6px; top: 6px; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--radius-badge); background: transparent; color: var(--color-mutedAccessible); cursor: pointer; }
+.search-clear:hover { background: var(--color-light); color: var(--color-ink); }
+.search-clear:active, .person:active { transform: scale(.97); }
+.search-clear:focus-visible { outline: 3px solid var(--color-blue); outline-offset: 0; }
+.list-toolbar-end { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.list-count { margin: 0; color: var(--color-mutedAccessible); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.list-hint { margin: -4px 0 16px; color: var(--color-mutedAccessible); font-size: 12px; line-height: 18px; }
+.list-empty { margin: 0; padding: 32px 0; color: var(--color-mutedAccessible); font-size: 14px; }
+.list-pager { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+.list-pager span { color: var(--color-mutedAccessible); font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Access requests and invitations: subject and status, then the facts a reviewer needs, then the decision. */
+.request-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-line); }
+.request-row:last-child { border-bottom: 0; padding-bottom: 4px; }
+.request-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px 16px; padding: 20px 0; border-bottom: 1px solid var(--color-line); overflow-wrap: anywhere; }
+.request-subject { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.request-subject strong { display: block; font-size: 14px; line-height: 21px; }
+.request-subject span:not(.request-kind) { display: block; color: var(--color-mutedAccessible); font-size: 12px; line-height: 18px; }
+.request-kind { flex-shrink: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-button); background: var(--color-light); color: var(--color-ink); }
+.request-facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 0; padding-left: 52px; }
+.request-facts dt { color: var(--color-mutedAccessible); font-size: 12px; line-height: 18px; }
+.request-facts dd { margin: 2px 0 0; font-size: 14px; line-height: 21px; }
+.request-facts small { display: block; margin-top: 4px; color: var(--color-mutedAccessible); font-size: 12px; }
+.request-wide { grid-column: 1 / -1; max-width: 72ch; }
+.request-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
+.request-chips li { padding: 2px 8px; border: 1px solid var(--color-line); border-radius: var(--radius-badge); background: var(--color-light); font-size: 12px; line-height: 18px; }
+.request-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.request-actions small { margin-right: auto; padding-left: 52px; color: var(--color-mutedAccessible); font-size: 12px; }
+.invitation-row { grid-template-columns: minmax(0, 1fr) auto; }
+
+/* Sessions: choose a person, then review their sessions. */
+.sessions-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; }
+.sessions-layout > * { min-width: 0; }
+.staff-access .data-table td small { display: block; margin-top: 2px; color: var(--color-mutedAccessible); font-size: 12px; font-weight: 400; }
+.sessions-people { padding-right: 24px; border-right: 1px solid var(--color-line); }
+.sessions-people .list-toolbar { margin-top: 0; }
+.sessions-layout { margin-top: 16px; }
+.sessions-people .search-field { max-width: none; }
+.people-list { display: grid; gap: 2px; max-height: 440px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.person { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-button); background: transparent; color: var(--color-ink); font: inherit; text-align: left; cursor: pointer; transition: background-color .15s ease-out, transform .1s ease-out; }
+.person:hover { background: var(--color-light); }
+.person[aria-current=true] { background: var(--color-pale); }
+.person:focus-visible { outline: 3px solid var(--color-blue); outline-offset: -3px; }
+.person > span:last-child { min-width: 0; }
+.person strong, .person small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person strong { font-size: 14px; line-height: 20px; }
+.person small { color: var(--color-mutedAccessible); font-size: 12px; line-height: 18px; }
+.person-avatar { flex-shrink: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--color-navy); color: var(--color-white); font-size: 12px; font-weight: 700; }
+.sessions-detail-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sessions-detail-head h3 { margin: 0; font-size: 18px; line-height: 26px; font-weight: 700; }
+.sessions-detail-head .list-toolbar { margin: 0; }
+.sessions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sessions-table th, .sessions-table td { padding: 14px 12px; border-bottom: 1px solid var(--color-line); text-align: left; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.sessions-table thead th { background: var(--color-light); color: var(--color-mutedAccessible); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.sessions-table tbody th { background: transparent; color: var(--color-ink); font-weight: 400; }
+.sessions-table td, .session-name small, .sessions-table .status-badge { white-space: nowrap; }
+.session-name { display: flex; align-items: center; gap: 10px; }
+.session-name .icon { flex-shrink: 0; color: var(--color-mutedAccessible); }
+.session-name strong, .session-name small { display: block; }
+.session-name small { color: var(--color-mutedAccessible); font-size: 12px; }
+.session-action { text-align: right; }
+.session-action small { color: var(--color-mutedAccessible); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .sessions-layout { grid-template-columns: minmax(0, 1fr); }
+  .sessions-people { padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--color-line); }
+  .people-list { max-height: 240px; }
+}
+@media (max-width: 760px) {
+  .search-field { max-width: none; flex-basis: 100%; }
+  .list-toolbar-end { margin-left: 0; width: 100%; justify-content: space-between; }
+  .request-facts, .request-actions small { padding-left: 0; }
+  .request-actions .button { flex: 1 1 auto; }
+  .staff-access .access-table-scroll { max-height: 60vh; }
+  .sessions-detail .access-table-scroll { max-height: none; overflow: visible; }
+  .sessions-table thead { display: none; }
+  .sessions-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 16px 0; border-bottom: 1px solid var(--color-line); }
+  .sessions-table tbody tr:last-child { border-bottom: 0; }
+  .sessions-table th, .sessions-table td { padding: 0; border: 0; }
+  .sessions-table td[data-label] { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+  .sessions-table td[data-label]::before { content: attr(data-label); color: var(--color-mutedAccessible); }
+  .sessions-table tbody th { grid-column: 1; grid-row: 1; }
+  .sessions-table td:nth-of-type(3) { grid-column: 2; grid-row: 1; }
+  .session-action { grid-column: 1 / -1; text-align: left; }
+  .session-action .button { width: 100%; }
+  .session-action small { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { .person, .search-field input { transition: none; } .search-clear:active, .person:active { transform: none; } }

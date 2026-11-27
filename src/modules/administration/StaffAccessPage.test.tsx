@@ -28,7 +28,21 @@ describe('staff administration interface', () => {
     expect(screen.getByText('f***@example.test')).toBeInTheDocument();
     await user.type(screen.getByRole('searchbox', { name: 'Find staff' }), 'unmatched');
     expect(screen.getByText('No staff match these filters.')).toBeInTheDocument();
-    expect(screen.getByText('0 / 1 displayed')).toBeInTheDocument();
+    expect(screen.getByText('0 of 1')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    await user.click(screen.getByRole('button', { name: 'Suspended', pressed: false }));
+    expect(screen.getByRole('button', { name: 'Suspended' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('No staff match these filters.')).toBeInTheDocument();
+    expect(screen.getAllByRole('searchbox')).toHaveLength(1);
+  });
+  it('searches capabilities and filters roles in the matrix', async () => {
+    const user = userEvent.setup();
+    render(<StaffAccessPage {...props}/>);
+    await user.type(screen.getByRole('searchbox', { name: 'Search capabilities' }), 'access');
+    expect(screen.getByRole('rowheader', { name: 'access.manage' })).toBeInTheDocument();
+    expect(screen.queryByRole('rowheader', { name: 'accounts.read' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Disabled' }));
+    expect(screen.getByText('No roles match this filter.')).toBeInTheDocument();
   });
   it('requires an explicit role and scope before an invitation can be reviewed', async () => {
     const user = userEvent.setup();

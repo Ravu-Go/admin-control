@@ -9,11 +9,6 @@ import { useStaffSession } from './StaffSession';
 import { signOutStaff } from '../api/staff-auth';
 import { canOpenRoute } from './permissions';
 
-export function DemoBanner({ appEnv, demoMode }: { appEnv: string; demoMode: boolean }) {
-  const { t } = useTranslation();
-  return appEnv !== 'production' || demoMode ? <footer className="demo-banner">{t('demo')}</footer> : null;
-}
-
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
@@ -61,13 +56,11 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   </header>;
 }
 
-
 export function AppShell({ children, title, description, hideHeader = false }: { children: ReactNode; title: string; description: string; hideHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useTranslation();
   return <div className="app-shell"><a className="skip-link" href="#main">{t('skip')}</a>
     <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)}/><TopBar onMenu={() => setMenuOpen(!menuOpen)}/>
     <main id="main" tabIndex={-1}>{!hideHeader && <PageHeader title={title} subtitle={description}/>}<div className="page-body" data-testid="playground-body">{children}</div></main>
-    <DemoBanner appEnv={import.meta.env.VITE_APP_ENV || 'staging'} demoMode={import.meta.env.VITE_DEMO_MODE !== 'false'}/>
   </div>;
 }

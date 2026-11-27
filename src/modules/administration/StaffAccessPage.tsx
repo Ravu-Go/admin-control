@@ -4,7 +4,7 @@ import { useAccessText } from './access-copy';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { components } from '../../api/generated/admin';
 import { Button, ConfirmDialog, Panel, StatusBadge, type ConfirmedCommand } from '../../design/components';
-import { Icon } from '../../design/Icon';
+import { ListToolbar, matches } from './ListToolbar';
 import { PageHeader } from '../../design/PageHeader';
 import { Tabs, TabPanel, useQueryChoice } from '../../design/Tabs';
 import { DialogHeader } from '../../design/DialogHeader';
@@ -23,7 +23,9 @@ type Props = {
   capabilities: readonly Permission[]; areas: { id: string; label: string }[];
   loading?: boolean; error?: string | undefined; requests?: ReactNode; pendingRequests?: number | undefined; sessions?: ReactNode; users?: ReactNode; isSuperAdmin?: boolean;
   onReload: () => void;
-  totalStaff?: number | undefined; onSearch?: (value: string) => void; pagination?: ReactNode; previousTimestamp?: string | null; staffFilters?: ReactNode;
+  totalStaff?: number | undefined; pagination?: ReactNode; previousTimestamp?: string | null;
+  /** Server-backed staff search and status filter; without them the page filters the rows it was given. */
+  staffSearch?: { value: string; onChange: (value: string) => void; searching?: boolean }; staffStatus?: { value: string; onChange: (value: string) => void };
   /** Adapter must reauthenticate and submit an audited command using the current authority mode. */
   onRequestChange?: (values: AccessFormCommand, confirmation: ConfirmedCommand) => Promise<void>;
 };
@@ -35,14 +37,22 @@ export function StaffAccessPage(props: Props) {
   const tabLabels: Record<AccessTab, string> = { roles: tr('Roles'), staff: tr('Staff'), users: tr('Users'), requests: tr('Access requests'), sessions: tr('Sessions') };
   const tabIds = accessTabs.filter(id => id !== 'users' || props.isSuperAdmin);
   const [tab, setTab] = useQueryChoice<AccessTab>('tab', tabIds, 'roles');
-  const [query, setQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState('');
+  const [localStatus, setLocalStatus] = useState('');
+  const [capabilityQuery, setCapabilityQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [editor, setEditor] = useState<Editor | null>(null);
   const [notice, setNotice] = useState('');
   const manage = props.permissions.includes('access.manage') && !!props.onRequestChange && !props.loading && !props.error;
   const allowed = props.permissions.includes('access.read');
   const showEditor = (value: Editor) => { setNotice(''); setEditor(value); };
-  const lower = query.trim().toLocaleLowerCase();
-  const staff = props.staff.filter(row => [row.display_name, row.email_masked].some(text => text.toLocaleLowerCase().includes(lower)));
+  const query = props.staffSearch?.value ?? localQuery;
+  const status = props.staffStatus?.value ?? localStatus;
+  const staff = props.staff.filter(row => matches(query, row.display_name, row.email_masked) && (!status || row.status === status));
+  const roles = props.roles.filter(role => roleFilter === 'all' || role.enabled === (roleFilter === 'enabled'));
+  const capabilities = props.capabilities.filter(capability => matches(capabilityQuery, capability));
+  const of = (shown: number, total: number) => `${shown} ${tr('of')} ${total}`;
+  const search = (label: string, value: string, onChange: (value: string) => void, placeholder = tr('Search by name')) => ({ label, value, onChange, placeholder, clearLabel: tr('Clear search') });
   const columns: ColumnDef<Staff>[] = [
     { accessorKey: 'display_name', header: tr('Staff member'), cell: ({ row }) => <><strong>{row.original.display_name}</strong><small>{row.original.email_masked}</small></> },
     { id: 'role', header: tr('Role'), accessorFn: user => user.role_ids.map(id => props.roles.find(role => role.id === id)?.name ?? tr('Unavailable role')).join(', ') || tr('Unassigned') },
@@ -58,19 +68,25 @@ export function StaffAccessPage(props: Props) {
       {notice && <p role="status" className="access-notice">{notice}</p>}
       {props.error ? <Panel title={tr("Staff administration unavailable")}><p role="alert">{props.error}</p><Button kind="secondary" onClick={props.onReload}>{tr("Try again")}</Button></Panel> : props.loading ? <Panel title={tr("Loading staff administration")}><p role="status">{tr("Retrieving current permissions and records…")}</p></Panel> :
       <TabPanel idPrefix="access" id={tab}>
-        {tab === 'roles' && <Panel title={tr("Role capability matrix")}><div className="access-panel-tools"><p>{tr(props.isSuperAdmin ? "Role changes apply immediately. Reassign affected staff." : "Role changes need independent approval. Reassign affected staff.")}</p><Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'role' })}>{tr("Create role")}</Button></div>
-          {props.isSuperAdmin && <p>{tr('Your granted capabilities apply globally. The protected owner role prevents accidental self-lockout.')}</p>}
-          {props.roles.length === 0 ? <p>{tr("No roles are available.")}</p> : <div className="access-table-scroll"><table className="access-matrix"><thead><tr><th scope="col">{tr("Capability")}</th>{props.roles.map(role => <th key={role.id} scope="col"><strong>{role.name}</strong><small>{role.enabled ? tr('Enabled') : tr('Disabled')}</small><Button kind="secondary" disabled={!manage || role.protected} title={role.protected ? tr('Protected owner role') : undefined} onClick={() => showEditor({ kind: 'role', role })}>{tr("Manage role")}</Button></th>)}</tr></thead><tbody>{props.capabilities.map(capability => <tr key={capability}><th scope="row">{capability}</th>{props.roles.map(role => <td key={role.id}>{role.permissions.includes(capability) ? tr('Granted') : tr('No access')}</td>)}</tr>)}</tbody></table></div>}
+        {tab === 'roles' && <Panel title={tr("Role capability matrix")}>
+          <ListToolbar search={search(tr('Search capabilities'), capabilityQuery, setCapabilityQuery, tr('Search capabilities'))}
+            filter={{ label: tr('Filter roles'), value: roleFilter, onChange: setRoleFilter, options: [{ id: 'all', label: tr('All') }, { id: 'enabled', label: tr('Enabled') }, { id: 'disabled', label: tr('Disabled') }] }}
+            action={<Button kind="secondary" disabled={!manage} onClick={() => showEditor({ kind: 'role' })}>{tr("Create role")}</Button>}/>
+          <p className="list-hint">{tr(props.isSuperAdmin ? "Role changes apply immediately. Reassign affected staff." : "Role changes need independent approval. Reassign affected staff.")}</p>
+          {props.isSuperAdmin && <p className="list-hint">{tr('Your granted capabilities apply globally. The protected owner role prevents accidental self-lockout.')}</p>}
+          {props.roles.length === 0 ? <p className="list-empty">{tr("No roles are available.")}</p> : roles.length === 0 ? <p className="list-empty">{tr("No roles match this filter.")}</p> : capabilities.length === 0 ? <p className="list-empty">{tr("No capabilities match this search.")}</p> : <div className="access-table-scroll"><table className="access-matrix"><thead><tr><th scope="col">{tr("Capability")}</th>{roles.map(role => <th key={role.id} scope="col"><strong>{role.name}</strong><small>{role.enabled ? tr('Enabled') : tr('Disabled')}</small><Button kind="secondary" disabled={!manage || role.protected} title={role.protected ? tr('Protected owner role') : undefined} onClick={() => showEditor({ kind: 'role', role })}>{tr("Manage role")}</Button></th>)}</tr></thead><tbody>{capabilities.map(capability => <tr key={capability}><th scope="row">{capability}</th>{roles.map(role => <td key={role.id}>{role.permissions.includes(capability) ? tr('Granted') : tr('No access')}</td>)}</tr>)}</tbody></table></div>}
         </Panel>}
-        {tab === 'staff' && <Panel title={tr("Staff directory")}><div className="access-panel-tools"><label>{tr("Find staff")}<input type="search" value={query} onChange={event => { setQuery(event.target.value); props.onSearch?.(event.target.value); }} placeholder={tr("Name")}/></label><span>{staff.length} / {props.totalStaff ?? props.staff.length} displayed</span></div>
-          {staff.length === 0 ? <p>{tr('No staff match these filters.')}</p> : <DataTable rows={staff} columns={columns} externalPagination previousTimestamp={props.previousTimestamp ?? null}/>}
-          {props.staffFilters}{props.pagination}
+        {tab === 'staff' && <Panel title={tr("Staff directory")}>
+          <ListToolbar search={search(tr('Find staff'), query, props.staffSearch?.onChange ?? setLocalQuery)}
+            filter={{ label: tr('Filter staff'), value: status, onChange: props.staffStatus?.onChange ?? setLocalStatus, options: [{ id: '', label: tr('All') }, { id: 'active', label: tr('Active') }, { id: 'suspended', label: tr('Suspended') }] }}
+            count={props.staffSearch?.searching ? tr('Searching…') : of(staff.length, props.totalStaff ?? props.staff.length)}/>
+          {staff.length === 0 ? <p className="list-empty">{tr('No staff match these filters.')}</p> : <DataTable rows={staff} columns={columns} externalPagination filterable={false} previousTimestamp={props.previousTimestamp ?? null}/>}
+          {props.pagination}
         </Panel>}
         {tab === 'users' && props.users}
         {tab === 'requests' && (props.requests ?? <Panel title={tr("Access requests")}><p>{tr("Approval data is not connected yet. No access changes have been made.")}</p></Panel>)}
         {tab === 'sessions' && (props.sessions ?? <Panel title={tr("Staff sessions")}><p>{tr("Session management is not connected yet.")}</p></Panel>)}
       </TabPanel>}
-      <div className="access-security-note"><Icon name="shield"/><div><strong>{tr("No shared super-admin credentials")}</strong><p>{tr(props.isSuperAdmin ? 'MFA, confirmation and an audit reason are required.' : 'MFA and a second administrator’s approval are required.')}</p></div></div>
     </>}
     {editor && manage && <AccessEditor key={editor.staff?.id ?? editor.role?.id ?? editor.kind} editor={editor} direct={!!props.isSuperAdmin} roles={props.roles} capabilities={props.capabilities} areas={props.areas} onClose={() => setEditor(null)} onSubmit={async (values, confirmation) => { if (!props.onRequestChange) return; await props.onRequestChange(values, confirmation); setEditor(null); setNotice(tr(props.isSuperAdmin ? 'Change applied.' : 'Request submitted for independent review.')); }}/>} 
   </div>;
