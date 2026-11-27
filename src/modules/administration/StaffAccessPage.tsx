@@ -48,7 +48,7 @@ export function StaffAccessPage(props: Props) {
     { id: 'role', header: tr('Role'), accessorFn: user => user.role_ids.map(id => props.roles.find(role => role.id === id)?.name ?? tr('Unavailable role')).join(', ') || tr('Unassigned') },
     { accessorKey: 'status', header: tr('Access'), cell: ({ row }) => <StatusBadge status={row.original.status === 'active' ? 'success' : 'danger'} label={tr(row.original.status === 'active' ? 'Active' : 'Suspended')}/> },
     { accessorKey: 'mfa_enrolled', header: tr('MFA'), cell: ({ row }) => tr(row.original.mfa_enrolled ? 'Enrolled' : 'Enrollment required') },
-    { id: 'action', header: tr('Action'), cell: ({ row }) => <Button kind="secondary" disabled={!manage || row.original.role_ids.some(id => props.roles.find(role => role.id === id)?.protected)} onClick={() => showEditor({ kind: 'staff', staff: row.original })}>{tr('Manage user')}</Button> },
+    { id: 'action', header: tr('Action'), cell: ({ row }) => <Button kind="secondary" disabled={!manage || row.original.role_ids.some(id => props.roles.find(role => role.id === id)?.protected)} title={row.original.role_ids.some(id => props.roles.find(role => role.id === id)?.protected) ? tr('Protected owner role') : undefined} onClick={() => showEditor({ kind: 'staff', staff: row.original })}>{tr('Manage user')}</Button> },
   ];
   return <div className="staff-access" data-testid="staff-access-page">
     <PageHeader title={tr("Staff roles and permissions")} subtitle={tr("Least privilege · Named staff only")}
