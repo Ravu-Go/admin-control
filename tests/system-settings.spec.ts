@@ -9,7 +9,7 @@ async function confirmAndVerify(page: Page, reason = 'Fictional brand and contac
   await confirmation.getByRole('button', { name: 'Confirm', exact: true }).click();
   const verification = page.locator('.identity-dialog');
   await verification.getByLabel('Current password', { exact: true }).fill('Fictional-Password1234!');
-  await verification.getByLabel('Verification code', { exact: true }).fill('123456');
+  await verification.getByRole('button', { name: 'Verify and continue' }).click();
 }
 
 test('app details are validated, confirmed with fresh authentication and saved once', async ({ page }) => {

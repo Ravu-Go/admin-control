@@ -180,7 +180,7 @@ export interface paths {
         put?: never;
         /**
          * step up
-         * @description Requires a complete MFA session, current password, a new authenticator code, and an explicit capability grant. Proof expires after five minutes or the session deadline, is scoped to one action and is consumed on one guarded action attempt. It never grants permission or replaces confirmation, audit, object scope or maker/checker.
+         * @description Requires a complete MFA session, the current password and an explicit capability grant; no authenticator code (a code sent by older clients is ignored). Proof expires after five minutes or the session deadline, is scoped to one action and is consumed on one guarded action attempt. It never grants permission or replaces confirmation, audit, object scope or maker/checker.
          */
         post: operations["step_up"];
         delete?: never;
@@ -2652,7 +2652,11 @@ export interface components {
         StepUpRequest: {
             /** Format: password */
             password: string;
-            code: string;
+            /**
+             * @deprecated
+             * @description Ignored. Step-up re-checks the password only; MFA is required at sign-in.
+             */
+            code?: string;
             /** @enum {string} */
             action: "access.approve" | "access.manage" | "communications.send" | "exports.create" | "integrations.test" | "pii.disclose" | "plans.approve" | "plans.manage" | "programmes.approve" | "programmes.manage" | "refunds.approve" | "refunds.execute" | "refunds.request" | "rewards.approve" | "rewards.request" | "settings.approve" | "settings.manage";
         };
