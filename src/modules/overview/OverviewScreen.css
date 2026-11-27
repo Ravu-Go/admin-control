@@ -1,0 +1,45 @@
+.overview-screen { min-width: 0; }
+.overview-heading h1 { margin: 0; font-size: 30px; line-height: 1.3; font-weight: 700; }
+.overview-heading p { margin: 10px 0 20px; color: var(--color-mutedAccessible); }
+.overview-filters { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+.overview-filters label { min-width: 132px; }
+.overview-filters label:first-child { min-width: 230px; }
+.overview-filters select { width: 100%; height: 44px; padding: 0 16px; color: var(--color-ink); background: var(--color-white); border: 2px solid var(--color-line); border-radius: var(--radius-button); font: inherit; font-weight: 700; }
+.overview-freshness { margin-right: auto; color: var(--color-success); font-size: 12px; min-width: 130px; }
+.overview-freshness strong,.overview-freshness small { display: block; }
+.overview-freshness small { color: var(--color-mutedAccessible); font-size: 11px; }
+.overview-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+.overview-kpis .kpi-card { min-width: 0; padding: 14px 16px; }
+.overview-kpis .kpi-card strong { font-size: clamp(22px,2.2vw,32px); white-space: nowrap; }
+.overview-kpis .kpi-card small { font-size: 11px; color: var(--color-success); }
+.overview-kpis .kpi-card p { min-height: 18px; font-size: 12px; }
+.overview-charts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; margin-bottom: 24px; }
+.overview-chart { width: 100%; height: 170px; margin-top: 6px; font-size: 11px; }
+.overview-chart .recharts-text { fill: var(--color-mutedAccessible); }
+.overview-footnote { color: var(--color-mutedAccessible); font-size: 12px; margin: 12px 0 0; }
+.overview-bottom { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; }
+.overview-bottom .panel { min-height: 255px; }
+.overview-breakdown { display: flex; align-items: center; gap: 14px; min-height: 133px; }
+.overview-donut { position: relative; flex: 0 0 112px; height: 112px; }
+.overview-donut>span { position: absolute; inset: 35px 0; text-align: center; pointer-events: none; }
+.overview-donut strong { display: block; font-size: 18px; line-height: 22px; }
+.overview-donut small { display: block; color: var(--color-mutedAccessible); font-size: 11px; }
+.overview-breakdown ul,.overview-memberships,.overview-recent { list-style: none; padding: 0; margin: 0; }
+.overview-breakdown li { margin: 9px 0; }
+.overview-breakdown li strong,.overview-breakdown li span { display: block; }
+.overview-breakdown li span { color: var(--color-mutedAccessible); font-size: 12px; }
+.overview-memberships li { margin-top: 16px; font-size: 12px; }
+.overview-memberships li>div { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.overview-memberships progress { display: block; width: 100%; height: 10px; appearance: none; border: 0; border-radius: var(--radius-badge); background: var(--color-light); accent-color: var(--color-blue); }
+.overview-memberships progress::-webkit-progress-bar { border-radius: var(--radius-badge); background: var(--color-light); }
+.overview-memberships progress::-webkit-progress-value { border-radius: var(--radius-badge); background: var(--color-blue); }
+.overview-memberships progress::-moz-progress-bar { border-radius: var(--radius-badge); background: var(--color-blue); }
+.overview-recent li { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--color-line); }
+.overview-recent li:last-child { border-bottom: 0; }
+.overview-recent li div { min-width: 0; }
+.overview-recent strong,.overview-recent small { display: block; }
+.overview-recent small,.overview-recent time { font-size: 11px; color: var(--color-mutedAccessible); }
+.overview-recent time { margin-left: auto; white-space: nowrap; }
+.overview-stale { border-left: 3px solid var(--color-warning); padding: 10px 14px; background: var(--color-white); }
+@media(max-width:1200px) { .overview-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }.overview-bottom { grid-template-columns: repeat(2,minmax(0,1fr)); }.overview-bottom>.panel:last-child { grid-column: 1 / -1; } }
+@media(max-width:700px) { .overview-charts,.overview-bottom { grid-template-columns: minmax(0,1fr); }.overview-filters label { flex: 1 1 100%; }.overview-freshness { flex: 1; }.overview-heading h1 { font-size: 24px; }.overview-bottom>.panel:last-child { grid-column: auto; } }
