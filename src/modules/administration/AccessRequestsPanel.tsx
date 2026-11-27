@@ -13,7 +13,7 @@ type Props = {
   onReview: (record: AccessRequest, decision: 'approve' | 'reject') => void; onResend: (record: Invitation) => void; onRevoke: (record: Invitation) => void;
   explain: (error: unknown) => string; time: (value: string) => string;
 };
-const kindIcon = { invite: 'user-plus', staff: 'account', role: 'shield' } as const;
+const kindIcon = { invite: 'user-plus', staff: 'account', role: 'shield', account_closure: 'alert' } as const;
 const requestTone = { pending: 'pending', approved: 'success', rejected: 'neutral' } as const;
 const invitationTone = { pending: 'pending', accepted: 'success', expired: 'neutral', revoked: 'neutral' } as const;
 
@@ -24,7 +24,7 @@ export function AccessRequestsPanel(props: Props) {
   const [invitationFilter, setInvitationFilter] = useState('open');
   const pagerLabels = { previous: tr('Previous'), next: tr('Next'), page: tr('Page'), of: tr('of') };
   const statusLabel = (status: string) => tr(status.charAt(0).toUpperCase() + status.slice(1));
-  const kindLabel = { invite: tr('New staff invitation'), staff: tr('Staff access change'), role: tr('Role change') };
+  const kindLabel = { invite: tr('New staff invitation'), staff: tr('Staff access change'), role: tr('Role change'), account_closure: tr('Account deletion') };
   const scope = (record: AccessRequest) => record.summary.scope?.kind === 'global' ? tr('All operations')
     : record.summary.scope?.area_id ? areas(record.summary.scope.area_id) : null;
   const areas = (id: string | number) => props.areas.find(area => area.id === String(id))?.label ?? String(id);
@@ -40,7 +40,8 @@ export function AccessRequestsPanel(props: Props) {
         : rows.length === 0 ? <p className="list-empty">{tr(props.requestStatus === 'pending' && !query ? 'No pending requests.' : 'No requests match these filters.')}</p>
           : <ul className="request-list">{rows.map(record => {
             const own = record.requested_by === props.me;
-            const blocked = !props.canApprove || (own && !props.superAdmin);
+            const needsOwner = record.kind === 'account_closure' && !props.superAdmin;
+            const blocked = !props.canApprove || needsOwner || (own && !props.superAdmin);
             const role = record.summary.role_id ? props.roles.find(item => item.id === record.summary.role_id)?.name ?? record.summary.role_id : null;
             const where = scope(record);
             return <li className="request-row" key={record.id}>
@@ -52,12 +53,14 @@ export function AccessRequestsPanel(props: Props) {
               <dl className="request-facts">
                 {role && <div><dt>{tr('Role')}</dt><dd>{role}</dd></div>}
                 {where && <div><dt>{tr('Scope')}</dt><dd>{where}</dd></div>}
+                {record.kind === 'account_closure' && <div><dt>{tr('On approval')}</dt><dd>{tr('Account closed. Trip and payment history kept.')}</dd></div>}
                 <div><dt>{tr('Requested')}</dt><dd><time dateTime={record.created_at}>{props.time(record.created_at)}</time>{own && <small>{tr('Requested by you')}</small>}</dd></div>
                 <div className="request-wide"><dt>{tr('Reason')}</dt><dd>{record.reason}</dd></div>
                 {record.summary.permissions && <div className="request-wide"><dt>{tr('Capabilities')}</dt><dd><ul className="request-chips">{record.summary.permissions.map(permission => <li key={permission}>{permission}</li>)}</ul><small>{tr(record.summary.enabled ? 'Enabled on approval' : 'Stays disabled')}</small></dd></div>}
               </dl>
               {record.status === 'pending' && <div className="request-actions">
-                {own && !props.superAdmin && <small>{tr('Another administrator must review your request.')}</small>}
+                {needsOwner ? <small>{tr('Only a super administrator can approve account deletion.')}</small>
+                  : own && !props.superAdmin && <small>{tr('Another administrator must review your request.')}</small>}
                 <Button kind="secondary" disabled={blocked} onClick={() => props.onReview(record, 'reject')}>{tr('Reject…')}</Button>
                 <Button kind="secondary" icon="check" disabled={blocked} onClick={() => props.onReview(record, 'approve')}>{tr('Approve…')}</Button>
               </div>}

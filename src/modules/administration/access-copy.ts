@@ -134,6 +134,10 @@ const sw: Record<string, string> = {
   "Showing the first results. Refine the search to find others.": "Yanaonyeshwa matokeo ya kwanza. Boresha utafutaji kupata wengine.",
   "Requested by you": "Imeombwa na wewe",
   "Ended": "Vimeisha",
+  "Account deletion": "Kufuta akaunti",
+  "Only a super administrator can approve account deletion.": "Ni msimamizi mkuu pekee anayeweza kuidhinisha kufuta akaunti.",
+  "On approval": "Baada ya idhini",
+  "Account closed. Trip and payment history kept.": "Akaunti itafungwa. Historia ya safari na malipo itahifadhiwa.",
   "Review request": "Hakiki ombi"
 };
 export function useAccessText() {

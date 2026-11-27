@@ -9,7 +9,6 @@ async function credentials(page: Page) {
 }
 async function mfa(page: Page) {
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
-  await page.getByRole('button', { name: 'Verify and continue' }).click();
 }
 
 test('signs in after idle expiry with a missing cookie and a rotated CSRF rejection, without reloading', async ({ page }) => {

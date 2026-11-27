@@ -7,13 +7,13 @@ test('fictional identity preview validates, cancels, clears and sends no credent
   const sent: string[] = []; page.on('request', request => { if (request.method() === 'POST') sent.push(request.url()); });
   await page.goto('/playground/reauthentication');
   await page.getByRole('button', { name: 'Preview identity verification' }).click();
-  await page.getByLabel('Example password').fill('Fictional-password'); await page.getByLabel('Example authenticator code').fill('123456');
+  await page.getByLabel('Example password').fill('Fictional-password'); await page.getByLabel('Example authenticator code').fill('12345');
   await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Preview identity verification' })).toBeFocused();
   await page.getByRole('button', { name: 'Preview identity verification' }).click(); await expect(page.getByLabel('Example password')).toHaveValue('');
   await page.getByRole('button', { name: 'Verify and continue' }).click(); await expect(page.getByRole('alert')).toHaveCount(2);
   await page.getByLabel('Example password').fill('Fictional-password'); await page.getByLabel('Example authenticator code').fill('123456');
-  await page.getByRole('button', { name: 'Verify and continue' }).click(); await expect(page.getByRole('status')).toContainText('No live action');
+  await expect(page.getByRole('status')).toContainText('No live action');
   expect(sent).toEqual([]); expect(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))).not.toContain('Fictional-password');
 });
 test('identity preview supports Swahili and keyboard access without serious axe violations', async ({ page }) => {

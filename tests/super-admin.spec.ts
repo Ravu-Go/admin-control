@@ -9,7 +9,6 @@ async function verify(page: import('@playwright/test').Page) {
   await confirmation.getByRole('button', { name: 'Confirm', exact: true }).click();
   await page.getByLabel('Current password', { exact: true }).fill('Fictional-Password1234!');
   await page.getByLabel('Verification code', { exact: true }).fill('123456');
-  await page.getByRole('button', { name: 'Verify and continue' }).click();
 }
 
 test('super admin applies an administrator invitation directly', async ({ page }) => {
@@ -166,4 +165,17 @@ test('member controls remain accessible in Swahili on mobile without page overfl
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const audit = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
   expect(audit.violations.filter(item => item.impact === 'serious' || item.impact === 'critical')).toEqual([]);
+});
+
+test('super admin approves a pending account deletion and the account closes', async ({ page }) => {
+  const state = await mockStaffManagement(page, { superAdmin: true, closureRequest: true });
+  await page.goto('/administration/access?tab=requests');
+  const row = page.locator('.request-row').filter({ hasText: 'Account deletion' });
+  await expect(row).toContainText('Account closed. Trip and payment history kept.');
+  await row.getByRole('button', { name: 'Approve…', exact: true }).click();
+  await verify(page);
+  await expect(page.getByRole('status').filter({ hasText: 'Request approved.' })).toBeVisible();
+  expect(state.reviews).toBe(1);
+  await page.getByRole('tab', { name: 'Users' }).click();
+  await expect(page.getByText('Closed · history retained')).toBeVisible();
 });

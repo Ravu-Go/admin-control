@@ -2154,7 +2154,10 @@ export interface paths {
         /** list access requests */
         get: operations["list_access_requests"];
         put?: never;
-        /** Request a staff invitation, staff access change or role change */
+        /**
+         * Request a staff invitation, staff access change, role change or account deletion
+         * @description kind account_closure asks to delete (close) a rider, driver or partner account. It is always recorded with approval_mode super_admin and only a super administrator can review it. A pending duplicate or an already closed account returns 409.
+         */
         post: operations["propose_staff_access"];
         delete?: never;
         options?: never;
@@ -2173,7 +2176,7 @@ export interface paths {
         put?: never;
         /**
          * review access
-         * @description Independent checker; on grant revoke/re-evaluate all affected sessions, refresh families and realtime channels.
+         * @description Independent checker; on grant revoke/re-evaluate all affected sessions, refresh families and realtime channels. Account deletion requests (kind account_closure) can only be reviewed by a super administrator; approval closes the account and revokes its sessions.
          */
         post: operations["review_access"];
         delete?: never;
@@ -2453,7 +2456,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Super-administrator directory of riders, drivers and partners */
+        /**
+         * Masked directory of riders, drivers and partners
+         * @description Any staff member with access.read can browse. Creating users and changing their status stay super-administrator only; other managers request deletion through access-requests with kind account_closure.
+         */
         get: operations["list_managed_users"];
         put?: never;
         /** Super administrator creates an unverified member and sends a one-use setup link */
@@ -3850,7 +3856,7 @@ export interface components {
             created_by: string | null;
             updated_by: string | null;
             /** @enum {string} */
-            kind: "invite" | "staff" | "role";
+            kind: "invite" | "staff" | "role" | "account_closure";
             subject_id: string | null;
             subject_version: number | null;
             /** @enum {string} */
@@ -4722,6 +4728,8 @@ export interface components {
             kind: "global" | "area";
             area_id: number | null;
         };
+        /** @description Account deletion request for the rider, driver or partner named by subject_id and subject_version. The server records the name and email. Approval closes the account, keeps its trip and payment history, revokes its sessions and always needs a super administrator. */
+        ManagementAccountClosure: Record<string, never>;
         ManagementInvite: {
             name: string;
             /** Format: email */
@@ -4746,10 +4754,10 @@ export interface components {
         };
         StaffManagementCommand: {
             /** @enum {string} */
-            kind: "invite" | "staff" | "role";
+            kind: "invite" | "staff" | "role" | "account_closure";
             subject_id?: number | null;
             subject_version?: number | null;
-            payload: components["schemas"]["ManagementInvite"] | components["schemas"]["ManagementStaff"] | components["schemas"]["ManagementRole"];
+            payload: components["schemas"]["ManagementInvite"] | components["schemas"]["ManagementStaff"] | components["schemas"]["ManagementRole"] | components["schemas"]["ManagementAccountClosure"];
             reason: string;
             /** @enum {boolean} */
             confirmed: true;

@@ -10,7 +10,6 @@ async function confirmAndVerify(page: Page) {
   const verification = page.locator('.identity-dialog');
   await verification.getByLabel('Current password', { exact: true }).fill('Fictional-Password1234!');
   await verification.getByLabel('Verification code', { exact: true }).fill('123456');
-  await verification.getByRole('button', { name: 'Verify and continue' }).click();
 }
 test('invite form requires confirmation and fresh authentication before sending one pending request', async ({ page }) => {
   const state = await mockStaffManagement(page);
@@ -154,4 +153,24 @@ test('the demo banner and shared-credential note are gone', async ({ page }) => 
   await page.goto('/administration/access');
   await expect(page.getByRole('heading', { name: 'Staff roles and permissions' })).toBeVisible();
   await expect(page.getByText(/DEMO DATA|No shared super-admin credentials|audit reason are required/)).toHaveCount(0);
+});
+
+test('a regular admin sees users and can only request deletion, which waits for a super admin', async ({ page }) => {
+  const state = await mockStaffManagement(page, { members: true });
+  await page.goto('/administration/access?tab=users');
+  await expect(page.getByRole('tab', { name: 'Users' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('Fictional rider member')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Create user…' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Close account…' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Request deletion…' }).click();
+  await confirmAndVerify(page);
+  await expect(page.getByRole('status').filter({ hasText: 'Deletion requested' })).toBeVisible();
+  expect(state.command).toMatchObject({ kind: 'account_closure', subject_id: 21, subject_version: 3, payload: {}, confirmed: true });
+  await expect(page.getByText('Deletion awaiting super admin approval')).toBeVisible();
+  await page.getByRole('tab', { name: 'Access requests' }).click();
+  const row = page.locator('.request-row').filter({ hasText: 'Account deletion' });
+  await expect(row).toContainText('Only a super administrator can approve account deletion.');
+  await expect(row.getByRole('button', { name: 'Approve…', exact: true })).toBeDisabled();
+  await expect(row.getByRole('button', { name: 'Reject…', exact: true })).toBeDisabled();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
