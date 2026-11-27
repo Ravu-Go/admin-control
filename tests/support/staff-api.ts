@@ -7,7 +7,7 @@ export const bootstrapFixture = (now = Date.now()): components['schemas']['Boots
   enabled_features: [], open_sos_count: 2,
   session_expires_at: new Date(now + 30 * 60_000).toISOString(), idle_expires_at: new Date(now + 15 * 60_000).toISOString(),
 });
-export async function mockStaffApi(page: Page, options: { authenticated?: boolean; permissions?: components['schemas']['Bootstrap']['permissions']; loginStatus?: number; loginState?: 'authenticated' | 'mfa_required' | 'enrollment_required' | 'password_change_required'; expired?: boolean; malformedLogin?: boolean; bootstrapStatus?: number; logoutStatus?: number; passwordChangeStatus?: number } = {}) {
+export async function mockStaffApi(page: Page, options: { authenticated?: boolean; enabledFeatures?: string[]; permissions?: components['schemas']['Bootstrap']['permissions']; loginStatus?: number; loginState?: 'authenticated' | 'mfa_required' | 'enrollment_required' | 'password_change_required'; expired?: boolean; malformedLogin?: boolean; bootstrapStatus?: number; logoutStatus?: number; passwordChangeStatus?: number } = {}) {
   const state = { authenticated: options.authenticated ?? false, loginCalls: 0, mfaCalls: 0, logoutCalls: 0, csrfCalls: 0, csrfRejections: 0, pendingExpired: false, csrfHeader: '' };
   await page.context().addCookies([{ name: 'XSRF-TOKEN', value: 'fixture-csrf-proof', domain: '127.0.0.1', path: '/' }]);
   await page.route('https://staging-api.ravultd.com/**', async route => {
@@ -25,6 +25,7 @@ export async function mockStaffApi(page: Page, options: { authenticated?: boolea
       // A new session must have future deadlines after the test advances the browser clock.
       const bootstrap = bootstrapFixture(await page.evaluate(() => Date.now()));
       if (options.permissions) bootstrap.permissions = options.permissions;
+      if (options.enabledFeatures) bootstrap.enabled_features = options.enabledFeatures;
       if (options.expired) bootstrap.session_expires_at = '2020-01-01T00:00:00Z';
       return json(state.authenticated ? 200 : 401, state.authenticated ? bootstrap : null);
     }

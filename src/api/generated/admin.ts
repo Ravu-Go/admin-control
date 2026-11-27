@@ -250,7 +250,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** get overview */
+        /**
+         * get overview
+         * @description Authenticated staff session and overview.read with explicit global or active area scope. Registration areas, immutable payment areas and current driver areas are evaluated independently. Snapshot totals and selected-period totals are distinct. Daily buckets use EAT. Receipts use generated TZS minor units and exclude cash fares and carrier fees. Recent entries contain IDs and verification flags, never names, contact details or documents.
+         */
         get: operations["get_overview"];
         put?: never;
         post?: never;
@@ -4121,7 +4124,7 @@ export interface components {
             meta: components["schemas"]["Meta"];
         };
         get_overviewResponse: {
-            data: components["schemas"]["Report"];
+            data: components["schemas"]["OverviewReport"];
             meta: components["schemas"]["Meta"];
         };
         list_accountsResponse: {
@@ -4793,6 +4796,53 @@ export interface components {
             data: components["schemas"]["ManagedUser"];
             meta: components["schemas"]["Meta"];
         };
+        OverviewReport: {
+            /** @constant */
+            kind: "overview";
+            /** Format: date-time */
+            period_start: string;
+            /** Format: date-time */
+            period_end: string;
+            /** @enum {string} */
+            timezone: "Africa/Dar_es_Salaam";
+            metrics: components["schemas"]["Metric"][];
+            filters: {
+                area_id: string | null;
+                /** @enum {unknown} */
+                audience: "both" | "rider" | "driver";
+            };
+            areas: {
+                id: string;
+                name: {
+                    en: string;
+                    sw: string;
+                };
+            }[];
+            daily: {
+                /** Format: date */
+                date: string;
+                riders: number;
+                drivers: number;
+                membership_receipts_minor: number;
+            }[];
+            user_breakdown: {
+                riders: number;
+                drivers: number;
+            };
+            memberships: {
+                code: string;
+                count: number;
+            }[];
+            recent_registrations: {
+                id: string;
+                /** @enum {unknown} */
+                kind: "rider" | "driver";
+                /** Format: date-time */
+                created_at: string;
+                phone_verified: boolean;
+                email_verified: boolean;
+            }[];
+        };
     };
     responses: {
         /** @description Unauthenticated or session expired. */
@@ -5300,7 +5350,16 @@ export interface operations {
     };
     get_overview: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Inclusive UTC instant, second precision with explicit offset. */
+                from?: string;
+                /** @description Exclusive UTC instant, second precision with explicit offset; at most 92 days after from. */
+                to?: string;
+                /** @description An active permitted operating area. Omit to aggregate only the caller's permitted areas; explicit global scope includes unattributed history. */
+                area_id?: number;
+                /** @description Default both. Driver membership receipts are zero for rider-only views. */
+                audience?: "both" | "rider" | "driver";
+            };
             header?: never;
             path?: never;
             cookie?: never;
